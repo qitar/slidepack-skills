@@ -1,0 +1,46 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "groups_chart": {
+        "type": "scatter-chart",
+        "axis1": {
+          "x_bounds": { "minimum": 0, "maximum": 10 },
+          "y_bounds": { "minimum": 0, "maximum": 10 },
+          "series": {
+            "natural": {
+              "name": "Natural",
+              "values": [
+                [7.1, 5.1],
+                [3.4, 6.9],
+                [2.6, 2.6],
+                [4.0, 8.1],
+                [2.8, 4.5]
+              ]
+            },
+            "synthetic": {
+              "name": "Synthetic",
+              "values": [
+                [4.6, 5.3],
+                [5.2, 3.6],
+                [6.0, 2.8],
+                [6.3, 6.5],
+                [8.2, 4.4]
+              ],
+              "styles": {
+                "shape": { "fill": "ffdd99", "outline": "ffaa55" }
+              },
+              "data_point_styles": [
+                null,
+                null,
+                { "shape": { "fill": "ff0000" } },
+                null,
+                null
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

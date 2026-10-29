@@ -1,0 +1,30 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "traffic_chart": {
+        "type": "chart",
+        "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "axis1": {
+          "bounds": { "minimum": 0, "maximum": 5000 },
+          "series": {
+            "organic": {
+              "name": "Organic",
+              "values": [1200, 1400, 1350, 1600, 1800, 900, 700],
+              "styles": {
+                "shape": { "fill": "6b95a4" }
+              }
+            },
+            "paid": {
+              "name": "Paid",
+              "values": [800, 900, 1100, 1000, 1300, 600, 500],
+              "styles": {
+                "shape": { "fill": "c9747f" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

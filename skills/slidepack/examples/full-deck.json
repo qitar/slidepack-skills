@@ -1,0 +1,73 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "report_title": "Q3 2026 Performance Review",
+      "subtitle": {
+        "type": "text",
+        "value": "Confidential",
+        "styles": { "font": { "italic": true, "color": "9e9e9e" } }
+      }
+    },
+    {
+      "template": 2,
+      "highlights": {
+        "type": "list",
+        "values": [
+          "Revenue: $4.8M (+16% YoY)",
+          { "value": "New customers: 340", "level": 1 },
+          { "value": "Enterprise: 42 accounts", "level": 1 }
+        ]
+      },
+      "revenue_chart": {
+        "type": "chart",
+        "labels": ["Jul", "Aug", "Sep"],
+        "axis1": {
+          "format": "#,#0",
+          "series": {
+            "rev": { "name": "Revenue", "values": [1500000, 1650000, 1680000] }
+          }
+        }
+      },
+      "footer_note": { "delete": true }
+    },
+    {
+      "template": 2,
+      "highlights": {
+        "type": "list",
+        "values": ["Segment breakdown", { "value": "By region", "level": 1 }]
+      },
+      "revenue_chart": {
+        "type": "scatter-chart",
+        "axis1": {
+          "x_bounds": { "minimum": 0, "maximum": 100 },
+          "y_bounds": { "minimum": 0, "maximum": 100 },
+          "series": {
+            "accounts": {
+              "name": "Accounts",
+              "values": [[20, 35], [45, 60], [70, 80], [85, 55]]
+            }
+          }
+        }
+      },
+      "footer_note": "Source: internal CRM"
+    },
+    {
+      "template": 3,
+      "kpi_table": {
+        "type": "table",
+        "rows": [
+          ["Metric", "Value", "Trend"],
+          ["MRR", "$400K", { "type": "text", "value": "+4%", "databar": { "ratio": 0.8, "color": "6b95a4" } }],
+          ["Churn", "1.8%", "-0.2pt"]
+        ]
+      }
+    }
+  ],
+  "theme": {
+    "colors": {
+      "accent1": "#1976d2",
+      "accent2": "#388e3c"
+    }
+  }
+}

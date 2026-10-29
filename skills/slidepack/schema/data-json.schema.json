@@ -1,0 +1,774 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SlidePack data.json",
+  "description": "Schema for SlidePack's data.json input format",
+  "$ref": "#/$defs/root",
+
+  "$defs": {
+    "root": {
+      "type": "object",
+      "required": ["slides"],
+      "x-doc-properties": ["slides", "theme"],
+      "properties": {
+        "slides": {
+          "type": "array",
+          "x-display-type": "object[]",
+          "description": "An array of [Slide objects](#slide). Each will result in a single slide in the output PPTX. Multiple Slide objects may point to the same template slide number, in which case that template slide will be reused multiple times.",
+          "description-ja": "[Slideオブジェクト](#slide)の配列。各要素がレンダリング結果PPTXで一枚のスライドになります。複数のSlideオブジェクトが同じテンプレートスライド番号を指すことができ、その場合、同じテンプレートスライドが複数回使用されます。",
+          "items": { "$ref": "#/$defs/slide" }
+        },
+        "theme": {
+          "$ref": "#/$defs/theme",
+          "x-display-type": "object",
+          "description": "A [Theme object](#theme) that applies to the whole PPTX presentation.",
+          "description-ja": "プレゼンテーション全体に適用される[Themeオブジェクト](#theme)。"
+        }
+      }
+    },
+    "slide": {
+      "type": "object",
+      "description": "Each Slide object will result in a single slide in the rendered pptx file.",
+      "required": ["template"],
+      "x-doc-properties": ["template"],
+      "properties": {
+        "template": {
+          "type": "integer",
+          "description": "The template slide number to use.",
+          "description-ja": "テンプレートスライド番号。"
+        }
+      },
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "$ref": "#/$defs/text" },
+          { "$ref": "#/$defs/table" },
+          { "$ref": "#/$defs/chart" },
+          { "$ref": "#/$defs/scatter-chart" },
+          { "$ref": "#/$defs/list" },
+          { "$ref": "#/$defs/image" },
+          { "$ref": "#/$defs/video" },
+          { "$ref": "#/$defs/delete" }
+        ]
+      }
+    },
+    "text": {
+      "type": "object",
+      "required": ["type", "value"],
+      "x-doc-properties": ["type", "value", "styles", "hyperlink", "level"],
+      "properties": {
+        "type": {
+          "const": "text",
+          "x-display-type": "string \"text\"",
+          "description": "",
+          "description-ja": ""
+        },
+        "value": {
+          "type": "string",
+          "description": "The text content value.",
+          "description-ja": "文字列の内容。"
+        },
+        "styles": {
+          "$ref": "#/$defs/styles",
+          "x-display-type": "object",
+          "description": "A [Styles object](#styles). Specified values will be used to override existing styles. \n`styles.font` applies to the text value.\n`styles.shape` applies to the containing shape.",
+          "description-ja": "[Stylesオブジェクト](#styles)。既存のスタイルを指定の値で上書きします。\n`styles.font`は文字列部分に適用され、\n`styles.shape`はシェイプ全体に適用されます。"
+        },
+        "hyperlink": {
+          "type": "string",
+          "format": "uri",
+          "description": "The text will link to this URL if specified.",
+          "description-ja": "URLを指定するとハイパーリンク化します。"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8,
+          "description": "Indent level of this text block within a list.\nMinimum is `0` (default), maximum is `8`.\nOnly applicable if this Text object is part of a [List object](#list).",
+          "description-ja": "箇条書き内でのインデントレベル。\n`0`（デフォルト）から`8`まで。\n[Listオブジェクト](#list)の要素として使われたときのみ有効です。"
+        }
+      }
+    },
+    "table": {
+      "type": "object",
+      "required": ["type", "rows"],
+      "x-doc-properties": [
+        "type",
+        "rows",
+        "rows[n][m]",
+        "rows[n][m].databar",
+        "horizontal_sizing",
+        "vertical_sizing"
+      ],
+      "x-extra-properties": {
+        "rows[n][m]": {
+          "x-display-type": "string or object",
+          "description": "Cell value at row n, column m.",
+          "description-ja": "n行m列のセルの値。"
+        },
+        "rows[n][m].databar": {
+          "$ref": "#/$defs/databar",
+          "x-display-type": "object",
+          "description": "A data bar will be drawn in the cell if specified.",
+          "description-ja": "指定するとセルにデータバーを描画します。"
+        }
+      },
+      "properties": {
+        "type": {
+          "const": "table",
+          "x-display-type": "string \"table\"",
+          "description": "",
+          "description-ja": ""
+        },
+        "rows": {
+          "type": "array",
+          "x-display-type": "string[][] or object[][]",
+          "description": "2-dimensional array of cell values.\nCell values may be a mixture of [Text objects](#text) and string shorthands.",
+          "description-ja": "セルの値の二次元配列。各値は[Textオブジェクト](#text)あるいは文字列（混合でも問題ありません）。",
+          "items": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "$ref": "#/$defs/text",
+                  "properties": {
+                    "databar": { "$ref": "#/$defs/databar" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "horizontal_sizing": {
+          "type": "string",
+          "enum": ["fixed", "anchor_left", "anchor_right"],
+          "x-display-type": "string enum",
+          "description": "Specifies how the table resizes horizontally when columns are added or removed.\n- `fixed` (default) - Keep the original table width. Column widths are adjusted to fit.\n- `anchor_left` - Keep the left side of the table in place. Table resizes to the right if necessary.\n- `anchor_right` - Keep the right side of the table in place. Table resizes to the left if necessary.",
+          "description-ja": "セル増減時の水平方向のリサイズ挙動。\n- `fixed`（デフォルト） - 表組みの幅を維持し、収まるように各セルの横幅を調整します。\n- `anchor_left` - 表組みの左端の位置を維持し、右方向に伸縮します。\n- `anchor_right` - 表組みの右端のいちを維持し、左方向に伸縮します。"
+        },
+        "vertical_sizing": {
+          "type": "string",
+          "enum": ["fixed", "anchor_top", "anchor_bottom"],
+          "x-display-type": "string enum",
+          "description": "Specifies how the table resizes vertically when rows are added or removed.\n- `fixed` - Keep the original table height. Row heights are adjusted to fit.\n- `anchor_top` (default) - Keep the top side of the table in place. Table resizes downwards if necessary.\n- `anchor_bottom` - Keep the bottom side of the table in place. Table resizes upwards if necessary.",
+          "description-ja": "セル増減時の垂直方向のリサイズ挙動。\n- `fixed` - 表組みの高さを維持し、収まるように各セルの高さを調整します。\n- `anchor_top`（デフォルト） - 表組みの上端の位置を維持し、下方向に伸縮します。\n- `anchor_bottom` - 表組みの下端の位置を維持し、上方向に伸縮します。"
+        }
+      }
+    },
+    "chart": {
+      "type": "object",
+      "required": ["type", "axis1"],
+      "x-doc-properties": [
+        "type",
+        "labels",
+        "labels_interval",
+        "date_labels",
+        "date_labels_format",
+        "date_labels_major_unit",
+        "date_labels_major_time_unit",
+        "axis1",
+        "axis2"
+      ],
+      "properties": {
+        "type": {
+          "const": "chart",
+          "x-display-type": "string \"chart\"",
+          "description": "",
+          "description-ja": ""
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "x-display-type": "string[]",
+          "description": "Array of strings that are displayed as category labels.\nThese are usually displayed on the horizontal axis.",
+          "description-ja": "項目ラベルとして表示する文字列の配列。\n通常、横軸沿いに表示されます。"
+        },
+        "labels_interval": {
+          "type": "integer",
+          "description": "Display interval of string category labels.\nFor example, `3` would mean one in every three of `labels` are actually displayed, and the rest are skipped.",
+          "description-ja": "文字列型項目ラベルの表示間隔。\n例えば`3`の場合、`labels`のうち3つに1つだけが表示され、残りはスキップされます。"
+        },
+        "date_labels": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "x-display-type": "integer[]",
+          "description": "Array of numerical values that are displayed as category labels.\nSpecify this instead of `labels` to use the \"Date axis\" format.\nValues are Excel date values: integers that denote the number of days since Jan 1, 1900.\nFor example, November 11, 2022 is `44881`.",
+          "description-ja": "項目ラベルとして表示する日付を数値で表した配列。\n`labels`の代わりにこちらを指定することで、日付軸項目ラベルに切り替わります。\n各値はExcelの日付数値、つまり1900年1月1日からの日数を表した整数です。\n例えば2022年11月11日は`44881`になります。"
+        },
+        "date_labels_format": {
+          "type": "string",
+          "description": "Format code for date axis category labels. An example is `\"yyyy/mm/dd\"`.\nRefer to [MS Office documents](https://support.microsoft.com/en-us/Search/results?query=excel+format+numbers+as+dates) for format code details.",
+          "description-ja": "日付軸項目ラベルの表示形式コード。`\"yyyy/mm/dd\"` など。\n詳細は[MS Officeのドキュメント](https://support.microsoft.com/ja-JP/search/results?query=%E6%97%A5%E4%BB%98%20%E6%99%82%E5%88%BB%20%E6%95%B0%E5%80%A4%E3%81%AE%E6%9B%B8%E5%BC%8F)を参照ください。"
+        },
+        "date_labels_major_unit": {
+          "type": "integer",
+          "description": "Display interval of date axis category labels. Combine with `date_labels_major_time_unit`.\nFor example, `2` and `\"months\"` means an interval of 2 months.",
+          "description-ja": "日付軸項目ラベルの表示間隔を`date_labels_major_time_unit`との組み合わせで指定します。\n例えば `2` と `\"months\"` なら二ヶ月おきにラベルが表示されます。"
+        },
+        "date_labels_major_time_unit": {
+          "type": "string",
+          "enum": ["days", "months", "years"],
+          "x-display-type": "string enum",
+          "description": "One of `\"days\"`, `\"months\"`, or `\"years\"`.",
+          "description-ja": "`\"days\"`, `\"months\"`, `\"years\"` のいずれか。"
+        },
+        "axis1": {
+          "$ref": "#/$defs/chart-axis",
+          "x-doc-expand": true,
+          "description": "Data for the primary value axis.",
+          "description-ja": "第1軸のデータ。"
+        },
+        "axis2": {
+          "$ref": "#/$defs/chart-axis",
+          "description": "Data for the secondary value axis. Schema is identical to `axis1`.",
+          "description-ja": "第2軸のデータ。形式は`axis1`と同じです。"
+        }
+      }
+    },
+    "chart-axis": {
+      "type": "object",
+      "required": ["series"],
+      "x-doc-properties": [
+        "series",
+        "series.{key}",
+        "bounds",
+        "bounds.minimum",
+        "bounds.maximum",
+        "format",
+        "major_unit"
+      ],
+      "x-extra-properties": {
+        "series.{key}": {
+          "$ref": "#/$defs/chart-series",
+          "x-display-type": "object",
+          "description": "Series data.\nIf the key exists as a series name in the template chart, that series will be overwritten. Otherwise, a new series will be created.",
+          "description-ja": "系列データ。\nテンプレートのグラフにキーと同名の系列がある場合、その系列が上書きされます。\nない場合は新たな系列が作成されます。"
+        }
+      },
+      "properties": {
+        "series": {
+          "type": "object",
+          "x-display-type": "object",
+          "description": "Map of series keys to series data objects.",
+          "description-ja": "系列データのコレクション。キーは系列名、値は系列データ。",
+          "additionalProperties": { "$ref": "#/$defs/chart-series" }
+        },
+        "bounds": {
+          "type": "object",
+          "description": "Display range of the value axis.",
+          "description-ja": "値軸の表示範囲。",
+          "properties": {
+            "minimum": {
+              "type": "number",
+              "description": "Minimum display value of the axis.",
+              "description-ja": "値軸の表示範囲の最小値。"
+            },
+            "maximum": {
+              "type": "number",
+              "description": "Maximum display value of the axis.",
+              "description-ja": "値軸の表示範囲の最大値。"
+            }
+          }
+        },
+        "format": {
+          "type": "string",
+          "description": "Format code for value axis labels. Examples are `\"0.0%\"` and `\"#,#0.0\"`.\nRefer to [MS Office documents](https://support.microsoft.com/en-US/search/results?query=excel+number+format+code) for format code details.",
+          "description-ja": "値軸のラベルの表示形式コード。`\"0.0%\"` and `\"#,#0.0\"`など。\n詳細は[MS Officeのドキュメント](https://support.microsoft.com/ja-JP/search/results?query=%E8%A1%A8%E7%A4%BA%E5%BD%A2%E5%BC%8F%E3%81%AE%E6%9B%B8%E5%BC%8F%E8%A8%98%E5%8F%B7)を参照ください。"
+        },
+        "major_unit": {
+          "type": "number",
+          "description": "Display interval of value axis labels.",
+          "description-ja": "値軸のラベルの表示間隔。"
+        }
+      }
+    },
+    "chart-series": {
+      "type": "object",
+      "required": ["name", "values"],
+      "x-doc-properties": ["name", "values", "styles", "data_point_styles"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "New name for the series. This name may appear, for example, in the chart legend.",
+          "description-ja": "系列の新しい名前。凡例などに反映されます。"
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "number" },
+          "x-display-type": "number[]",
+          "description": "Array of series data point values.",
+          "description-ja": "系列の数値の配列。"
+        },
+        "styles": {
+          "$ref": "#/$defs/styles",
+          "x-display-type": "object",
+          "description": "A [Styles object](#styles) for the whole series.",
+          "description-ja": "系列全体に適用する[Stylesオブジェクト](#styles)。"
+        },
+        "data_point_styles": {
+          "type": "array",
+          "x-display-type": "object[]",
+          "description": "Array of [Styles objects](#styles) for individual data points.\nEach styles object applies to the data point in the same position in the `values` array.\nUse `null` elements to keep default styles.",
+          "description-ja": "個々のデータポイントに適用する[Stylesオブジェクト](#styles)の配列。\n`values`配列の同インデックスの値にスタイルを適用します。\n元のスタイルを維持したい要素については `null` を指定します。",
+          "items": {
+            "oneOf": [{ "$ref": "#/$defs/styles" }, { "type": "null" }]
+          }
+        }
+      }
+    },
+    "scatter-chart": {
+      "type": "object",
+      "required": ["type", "axis1"],
+      "x-doc-properties": [
+        "type",
+        "axis1",
+        "axis2"
+      ],
+      "properties": {
+        "type": {
+          "const": "scatter-chart",
+          "x-display-type": "string \"scatter-chart\"",
+          "description": "",
+          "description-ja": ""
+        },
+        "axis1": {
+          "$ref": "#/$defs/scatter-chart-axis",
+          "x-doc-expand": true,
+          "description": "Data for the primary axis.",
+          "description-ja": "第1軸のデータ。"
+        },
+        "axis2": {
+          "$ref": "#/$defs/scatter-chart-axis",
+          "description": "Data for the secondary value axis data. Schema is identical to `axis1`.",
+          "description-ja": "第2軸のデータ。形式は`axis1`と同じです。"
+        }
+      }
+    },
+    "scatter-chart-axis": {
+      "type": "object",
+      "required": ["series"],
+      "x-doc-properties": [
+        "series",
+        "series.{key}",
+        "x_bounds",
+        "x_bounds.minimum",
+        "x_bounds.maximum",
+        "x_format",
+        "x_major_unit",
+        "y_bounds",
+        "y_bounds.minimum",
+        "y_bounds.maximum",
+        "y_format",
+        "y_major_unit"
+      ],
+      "x-extra-properties": {
+        "series.{key}": {
+          "$ref": "#/$defs/scatter-chart-series",
+          "x-display-type": "object",
+          "description": "Series data.\nIf the key exists as a series name in the template chart, that series will be overwritten. Otherwise, a new series will be created.",
+          "description-ja": "系列データ。\nテンプレートグラフ内にキーと同名の系列がある場合、その系列データが上書きされます。\nない場合は新たな系列が作成されます。"
+        }
+      },
+      "properties": {
+        "series": {
+          "type": "object",
+          "x-display-type": "object",
+          "description": "Map of series keys to series data objects.",
+          "description-ja": "系列データのコレクション。キーは系列名、値は系列データ。",
+          "additionalProperties": { "$ref": "#/$defs/scatter-chart-series" }
+        },
+        "x_bounds": {
+          "type": "object",
+          "description": "Display range of the X axis.",
+          "description-ja": "X軸の表示範囲。",
+          "properties": {
+            "minimum": {
+              "type": "number",
+              "description": "Minimum display value of the X axis.",
+              "description-ja": "X軸の表示範囲の最小値。"
+            },
+            "maximum": {
+              "type": "number",
+              "description": "Maximum display value of the X axis.",
+              "description-ja": "X軸の表示範囲の最大値。"
+            }
+          }
+        },
+        "x_format": {
+          "type": "string",
+          "description": "Format code for the X axis labels. Examples are `0.0%` and `#,#0.0`.\nRefer to [MS Office documents](https://support.microsoft.com/en-US/search/results?query=excel+number+format+code) for format code details.",
+          "description-ja": "X軸のラベルの表示形式コード。`0.0%` and `#,#0.0`など。\n詳細は[MS Officeのドキュメント](https://support.microsoft.com/ja-JP/search/results?query=%E8%A1%A8%E7%A4%BA%E5%BD%A2%E5%BC%8F%E3%81%AE%E6%9B%B8%E5%BC%8F%E8%A8%98%E5%8F%B7)を参照ください。"
+        },
+        "x_major_unit": {
+          "type": "number",
+          "description": "Display interval of labels of the X axis labels.",
+          "description-ja": "X軸のラベルの表示間隔。"
+        },
+        "y_bounds": {
+          "type": "object",
+          "description": "Display range of the Y axis.",
+          "description-ja": "Y軸の表示範囲。",
+          "properties": {
+            "minimum": {
+              "type": "number",
+              "description": "Minimum display value of the Y axis.",
+              "description-ja": "Y軸の表示範囲の最小値。"
+            },
+            "maximum": {
+              "type": "number",
+              "description": "Maximum display value of the Y axis.",
+              "description-ja": "Y軸の表示範囲の最大値。"
+            }
+          }
+        },
+        "y_format": {
+          "type": "string",
+          "description": "Format code for the Y axis labels. Examples are `0.0%` and `#,#0.0`.\nRefer to [MS Office documents](https://support.microsoft.com/en-US/search/results?query=excel+number+format+code) for format code details.",
+          "description-ja": "Y軸のラベルの表示形式コード。`0.0%` and `#,#0.0`など。\n詳細は[MS Officeのドキュメント](https://support.microsoft.com/ja-JP/search/results?query=%E8%A1%A8%E7%A4%BA%E5%BD%A2%E5%BC%8F%E3%81%AE%E6%9B%B8%E5%BC%8F%E8%A8%98%E5%8F%B7)を参照ください。"
+        },
+        "y_major_unit": {
+          "type": "number",
+          "description": "Display interval of labels of the Y axis labels.",
+          "description-ja": "Y軸のラベルの表示間隔。"
+        }
+      }
+    },
+    "scatter-chart-series": {
+      "type": "object",
+      "required": ["name", "values"],
+      "x-doc-properties": ["name", "values", "styles", "data_point_styles"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "New name for the series. This name may appear, for example, in the chart legend.",
+          "description-ja": "系列の新しい名前。凡例などに反映されます。"
+        },
+        "values": {
+          "type": "array",
+          "x-display-type": "[number, number][]",
+          "description": "Array of series data point values.\nEach element is a tuple `[x, y]` that represents a data point.",
+          "description-ja": "系列の数値の配列。個々の要素は `[x値, y値]` のタプルです。",
+          "items": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "styles": {
+          "$ref": "#/$defs/styles",
+          "x-display-type": "object",
+          "description": "A [Styles object](#styles) for the whole series.",
+          "description-ja": "系列全体に適用する[Stylesオブジェクト](#styles)。"
+        },
+        "data_point_styles": {
+          "type": "array",
+          "x-display-type": "object[]",
+          "description": "Array of [Styles objects](#styles) for individual data points.\nEach styles object applies to the data point in the same position in the `values` array.\nUse `null` elements to keep default styles.",
+          "description-ja": "個々のデータポイントに適用する[Stylesオブジェクト](#styles)の配列。\n`values`配列の同インデックスの値にスタイルを適用します。\n元のスタイルを維持したい要素については `null` を指定します。",
+          "items": {
+            "oneOf": [{ "$ref": "#/$defs/styles" }, { "type": "null" }]
+          }
+        }
+      }
+    },
+    "list": {
+      "type": "object",
+      "required": ["type", "values"],
+      "x-doc-properties": [
+        "type",
+        "values",
+        "values[n].level"
+      ],
+      "properties": {
+        "type": {
+          "const": "list",
+          "x-display-type": "string \"list\"",
+          "description": "",
+          "description-ja": ""
+        },
+        "values": {
+          "type": "array",
+          "x-display-type": "string[] or object[]",
+          "description": "List items. May be a mixture of [Text objects](#text) and string shorthands.",
+          "description-ja": "箇条書きの項目の配列。\n各値は[Textオブジェクト](#text)あるいは文字列（混合でも問題ありません）。",
+          "items": {
+            "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/text" }]
+          }
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "required": ["type", "src"],
+      "x-doc-properties": ["type", "src", "scaling", "overflow"],
+      "properties": {
+        "type": {
+          "const": "image",
+          "x-display-type": "string \"image\"",
+          "description": "",
+          "description-ja": ""
+        },
+        "src": {
+          "type": "string",
+          "description": "Include your image file in the zip archive, and specify the relative path from the directory `data.json` is in.\nSupported image formats are `jpg`, `jpeg`, `gif`, and `png`.",
+          "description-ja": "画像ファイルをzip内に格納し、`data.json`があるディレクトリからの相対パスを指定してください。\n対応形式は `jpg`, `jpeg`, `gif`, `png` です。"
+        },
+        "scaling": {
+          "type": "string",
+          "enum": ["none", "contain", "cover"],
+          "x-display-type": "string enum",
+          "description": "Specifies how the image should be scaled.\n- `none` (default) - Use the image intrinsic size.\n- `contain` - Scale so that the entire image fits within the target shape.\n- `cover` - Scale so that the image fills the target shape. Image may overflow.",
+          "description-ja": "画像の配置サイズ挙動。\n- `none`（デフォルト） - 画像本来の大きさのまま配置します。\n- `contain` - 画像全体が置換先の図形いっぱいに収まる大きさで配置します。\n- `cover` - 画像が置換先の図形を覆い隠す大きさで配置します。図形から画像がはみ出すことがあります。"
+        },
+        "overflow": {
+          "type": "string",
+          "enum": ["visible", "hidden"],
+          "x-display-type": "string enum",
+          "description": "Specifies how overflow should be treated.\n- `visible` (default) - Image is not clipped, and may overflow the target shape.\n- `hidden` - Image is clipped at the target shape bounds.",
+          "description-ja": "画像のはみ出しの挙動。\n- `visible`（デフォルト） - 画像を切り取りません。置換先の図形からはみ出した部分も表示されます。\n- `hidden` - 置換先の図形からはみ出した部分は切り取られ非表示になります。"
+        }
+      }
+    },
+    "video": {
+      "type": "object",
+      "required": ["type", "src"],
+      "x-doc-properties": ["type", "src", "thumbnail", "scaling"],
+      "properties": {
+        "type": {
+          "const": "video",
+          "x-display-type": "string \"video\"",
+          "description": "",
+          "description-ja": ""
+        },
+        "src": {
+          "type": "string",
+          "description": "A local video file path or a YouTube URL.\nFor local videos, include your video file in the zip archive, and specify the relative path from the directory `data.json` is in.\nSupported file formats are `mp4`, `m4v`, and `mov`.",
+          "description-ja": "動画ファイルへのパスまたはYouTubeの動画URL。\n動画ファイルの場合、zip内に格納し、`data.json`があるディレクトリからの相対パスを指定してください。\n対応形式は `mp4`, `m4v`, `mov` です。"
+        },
+        "thumbnail": {
+          "type": "string",
+          "description": "Picture to be shown when video is not playing.\nRequired for local video files.\nNeeds to have the same aspect ratio as the video itself.\nInclude your image file in the zip archive, and specify the relative path from the directory `data.json` is in.\nSupported file formats are `jpg`, `jpeg`, `png` and `gif`.",
+          "description-ja": "動画が再生されるまでの間に表示される画像。\nローカル動画ファイルの場合は必須。\n動画自体と同じ縦横比の画像を使用してください。\n画像ファイルをzip内に格納し、`data.json`があるディレクトリからの相対パスを指定してください。\n対応形式は `jpg`, `jpeg`, `gif`, `png` です。"
+        },
+        "scaling": {
+          "type": "string",
+          "enum": ["contain", "cover"],
+          "x-display-type": "string enum",
+          "description": "Specifies how the video should be scaled.\n- `contain` (default) - Scale so that the entire video fits within the target shape.\n- `cover` - Scale so that the video fills the target shape. Video may overflow.",
+          "description-ja": "動画の配置サイズ挙動。\n- `contain`（デフォルト） - 動画全体が置換先の図形いっぱいに収まる大きさで配置します。\n- `cover` - 動画が置換先の図形を覆い隠す大きさで配置します。図形から動画がはみ出すことがあります。"
+        }
+      }
+    },
+    "styles": {
+      "type": "object",
+      "x-doc-properties": [
+        "font",
+        "font.typeface",
+        "font.size",
+        "font.color",
+        "font.underline",
+        "font.bold",
+        "font.italic",
+        "font.strike",
+        "shape",
+        "shape.outline",
+        "shape.fill",
+        "shape.align",
+        "shape.vertical_align"
+      ],
+      "properties": {
+        "font": {
+          "type": "object",
+          "description": "Font styles.",
+          "description-ja": "フォントに関するスタイル。",
+          "properties": {
+            "typeface": {
+              "type": "string",
+              "description": "Changes the text font typeface. Examples are `\"Arial\"` and `\"Calibri\"`.",
+              "description-ja": "文字の書体。`\"Arial\"` や `\"Calibri\"`など。"
+            },
+            "size": {
+              "type": "number",
+              "description": "Changes the text font size, in points.",
+              "description-ja": "文字の大きさ（単位はポイント）。"
+            },
+            "color": {
+              "type": "string",
+              "description": "Changes the text [color](#colors).",
+              "description-ja": "文字の[色](#colors)。"
+            },
+            "underline": {
+              "type": "boolean",
+              "description": "Applies <u>underline</u>.",
+              "description-ja": "文字に<u>下線を引きます</u>。"
+            },
+            "bold": {
+              "type": "boolean",
+              "description": "Applies **bold**.",
+              "description-ja": "文字を**太字にします**。"
+            },
+            "italic": {
+              "type": "boolean",
+              "description": "Applies *italic*.",
+              "description-ja": "文字を*斜体にします*。"
+            },
+            "strike": {
+              "type": "boolean",
+              "description": "Applies ~~strike-through~~.",
+              "description-ja": "文字に~~打ち消し線を引きます~~。"
+            }
+          }
+        },
+        "shape": {
+          "type": "object",
+          "description": "Shape styles.",
+          "description-ja": "図形に関するスタイル。",
+          "properties": {
+            "outline": {
+              "type": "string",
+              "description": "Changes the shape outline [color](#colors).",
+              "description-ja": "図形の枠線の[色](#colors)。"
+            },
+            "fill": {
+              "type": "string",
+              "description": "Changes the shape fill [color](#colors).",
+              "description-ja": "図形の塗りの[色](#colors)。"
+            },
+            "align": {
+              "type": "string",
+              "enum": ["left", "center", "right", "justified", "distributed"],
+              "x-display-type": "string enum",
+              "description": "Changes the horizontal alignment of text within the shape.\nOne of `left`, `center`, `right`, `justified` or `distributed`.",
+              "description-ja": "図形内の横方向の文字揃え。\n`left`, `center`, `right`, `justified`, `distributed` のいずれか。"
+            },
+            "vertical_align": {
+              "type": "string",
+              "enum": ["top", "center", "bottom"],
+              "x-display-type": "string enum",
+              "description": "Changes the vertical alignment of text within the shape.\nOne of `top`, `center` or `bottom`.",
+              "description-ja": "図形内の縦方向の文字揃え。\n`top`, `center`, `bottom` のいずれか。"
+            }
+          }
+        }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "x-doc-properties": [
+        "colors",
+        "colors.lt1",
+        "colors.dk1",
+        "colors.lt2",
+        "colors.dk2",
+        "colors.accent1",
+        "colors.accent2",
+        "colors.accent3",
+        "colors.accent4",
+        "colors.accent5",
+        "colors.accent6",
+        "colors.hlink",
+        "colors.folHlink"
+      ],
+      "properties": {
+        "colors": {
+          "type": "object",
+          "description": "Color values.",
+          "description-ja": "テーマの色設定",
+          "properties": {
+            "lt1": {
+              "type": "string",
+              "description": "Color for \"Text/Background - Light 1\".\nThis is usually the slide background.",
+              "description-ja": "テーマの色「テキスト/背景: 淡色 1」。\n通常はこれがスライド背景色です。"
+            },
+            "dk1": {
+              "type": "string",
+              "description": "Color for \"Text/Background - Dark 1\".\nThis is usually the text color.",
+              "description-ja": "テーマの色「テキスト/背景: 濃色 1」。\n通常はこれが文字色です。"
+            },
+            "lt2": {
+              "type": "string",
+              "description": "Color for \"Text/Background - Light 2\".",
+              "description-ja": "テーマの色「テキスト/背景: 淡色 2」。"
+            },
+            "dk2": {
+              "type": "string",
+              "description": "Color for \"Text/Background - Dark 2\".",
+              "description-ja": "テーマの色「テキスト/背景: 濃色 2」。"
+            },
+            "accent1": {
+              "type": "string",
+              "description": "Color for \"Accent 1\".",
+              "description-ja": "テーマの色「アクセント 1」。"
+            },
+            "accent2": {
+              "type": "string",
+              "description": "Color for \"Accent 2\".",
+              "description-ja": "テーマの色「アクセント 2」。"
+            },
+            "accent3": {
+              "type": "string",
+              "description": "Color for \"Accent 3\".",
+              "description-ja": "テーマの色「アクセント 3」。"
+            },
+            "accent4": {
+              "type": "string",
+              "description": "Color for \"Accent 4\".",
+              "description-ja": "テーマの色「アクセント 4」。"
+            },
+            "accent5": {
+              "type": "string",
+              "description": "Color for \"Accent 5\".",
+              "description-ja": "テーマの色「アクセント 5」。"
+            },
+            "accent6": {
+              "type": "string",
+              "description": "Color for \"Accent 6\".",
+              "description-ja": "テーマの色「アクセント 6」。"
+            },
+            "hlink": {
+              "type": "string",
+              "description": "Color for \"Hyperlink\".",
+              "description-ja": "テーマの色「ハイパーリンク」。"
+            },
+            "folHlink": {
+              "type": "string",
+              "description": "Color for \"Followed Hyperlink\".",
+              "description-ja": "テーマの色「表示済みのハイパーリンク」。"
+            }
+          }
+        }
+      }
+    },
+    "databar": {
+      "type": "object",
+      "x-doc-properties": ["ratio", "color"],
+      "properties": {
+        "ratio": {
+          "type": "number",
+          "x-display-type": "number",
+          "description": "Length of the data bar, within range `0.0` to `1.0`.",
+          "description-ja": "データバーの長さ。`0.0`から`1.0`。"
+        },
+        "color": {
+          "type": "string",
+          "description": "[Color](#colors) of the data bar.",
+          "description-ja": "データバーの[色](#color)。"
+        }
+      }
+    },
+    "delete": {
+      "type": "object",
+      "required": ["delete"],
+      "x-doc-properties": ["delete"],
+      "properties": {
+        "delete": {
+          "const": true,
+          "x-display-type": "boolean",
+          "description": "Set to `true` to delete the element.",
+          "description-ja": "`true`を指定すると要素が削除されます。"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "hero_image": {
+        "type": "image",
+        "src": "images/hero.png",
+        "scaling": "cover",
+        "overflow": "hidden"
+      },
+      "promo_video": {
+        "type": "video",
+        "src": "videos/promo.mp4",
+        "thumbnail": "videos/promo-thumb.png",
+        "scaling": "contain"
+      },
+      "youtube_clip": {
+        "type": "video",
+        "src": "https://www.youtube.com/watch?v=fIlJyZEbrzo"
+      }
+    }
+  ],
+  "theme": {
+    "colors": {
+      "lt1": "#f5f2e3",
+      "dk1": "#6c685f",
+      "accent1": "#6b95a4",
+      "accent2": "#c9747f",
+      "hlink": "#1976d2"
+    }
+  }
+}

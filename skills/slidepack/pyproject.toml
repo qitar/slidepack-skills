@@ -1,0 +1,14 @@
+[project]
+name = "slidepack-skill"
+version = "0.3.0"
+description = "Helper scripts for the SlidePack Claude Skill"
+requires-python = ">=3.8"
+dependencies = ["jsonschema>=4.0"]
+
+[project.optional-dependencies]
+# Only for scripts/probe_template.py
+pptx = ["python-pptx>=0.6.21"]
+
+[tool.uv]
+# Scripts only; there is nothing to build or install.
+package = false

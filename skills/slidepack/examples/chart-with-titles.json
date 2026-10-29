@@ -1,0 +1,21 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "chart-title": "User signups: Main Product",
+      "x-axis-title": "Month",
+      "y-axis-title": "Signups",
+      "main-chart": {
+        "type": "chart",
+        "labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+        "axis1": {
+          "bounds": { "minimum": 0, "maximum": 200 },
+          "series": {
+            "ser1": { "name": "Pattern A", "values": [50, 60, 71, 75, 91, 123] },
+            "ser2": { "name": "Pattern B", "values": [62, 55, 60, 91, 89, 106] }
+          }
+        }
+      }
+    }
+  ]
+}

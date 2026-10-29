@@ -1,0 +1,26 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "quarterly_sales": {
+        "type": "chart",
+        "labels": ["Q1", "Q2", "Q3", "Q4"],
+        "axis1": {
+          "bounds": { "minimum": 0, "maximum": 150 },
+          "format": "#,#0",
+          "major_unit": 30,
+          "series": {
+            "ser1": {
+              "name": "Revenue",
+              "values": [100, 130, 120, 145]
+            },
+            "ser2": {
+              "name": "Expenses",
+              "values": [85, 90, 80, 95]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

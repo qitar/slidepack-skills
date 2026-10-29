@@ -1,0 +1,21 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "agenda": {
+        "type": "list",
+        "values": [
+          "事業ハイライト",
+          { "value": "売上は前年比16%増", "level": 1 },
+          { "value": "新規顧客340社を獲得", "level": 1 },
+          {
+            "value": "エンタープライズ領域が牽引",
+            "level": 2,
+            "styles": { "font": { "bold": true, "color": "2a4598" } }
+          },
+          "今後の見通し"
+        ]
+      }
+    }
+  ]
+}

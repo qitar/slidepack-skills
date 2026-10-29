@@ -1,0 +1,26 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "sales_table": {
+        "type": "table",
+        "horizontal_sizing": "fixed",
+        "vertical_sizing": "anchor_top",
+        "rows": [
+          ["四半期", "売上", "前年比"],
+          ["Q1", "1.2億円", "—"],
+          ["Q2", "1.4億円", "16%"],
+          [
+            { "type": "text", "value": "Q3", "styles": { "font": { "bold": true } } },
+            {
+              "type": "text",
+              "value": "1.65億円",
+              "databar": { "ratio": 1.0, "color": "6b95a4" }
+            },
+            "18%"
+          ]
+        ]
+      }
+    }
+  ]
+}

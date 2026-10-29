@@ -1,0 +1,3 @@
+# Vendored verbatim from docs.slidepack.io - keep it out of diff noise and out of
+# language statistics; it is not our source.
+skills/slidepack/schema/data-json.schema.json linguist-vendored

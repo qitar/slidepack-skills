@@ -1,0 +1,24 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "stock_price": {
+        "type": "chart",
+        "date_labels": [44562, 44593, 44621, 44652, 44682, 44713],
+        "date_labels_format": "yyyy/mm",
+        "date_labels_major_unit": 1,
+        "date_labels_major_time_unit": "months",
+        "axis1": {
+          "bounds": { "minimum": 1000, "maximum": 2000 },
+          "format": "#,#0",
+          "series": {
+            "price": {
+              "name": "Close price",
+              "values": [1320, 1450, 1380, 1610, 1720, 1680]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

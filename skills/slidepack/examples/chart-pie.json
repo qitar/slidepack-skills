@@ -1,0 +1,25 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "market_share": {
+        "type": "chart",
+        "labels": ["Product A", "Product B", "Product C", "Other"],
+        "axis1": {
+          "series": {
+            "share": {
+              "name": "Market share",
+              "values": [42, 28, 18, 12],
+              "data_point_styles": [
+                { "shape": { "fill": "6b95a4" } },
+                { "shape": { "fill": "c9747f" } },
+                { "shape": { "fill": "e0b15e" } },
+                { "shape": { "fill": "cccccc" } }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

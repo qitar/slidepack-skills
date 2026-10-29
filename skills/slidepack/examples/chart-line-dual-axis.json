@@ -1,0 +1,35 @@
+{
+  "slides": [
+    {
+      "template": 1,
+      "growth_chart": {
+        "type": "chart",
+        "labels": ["1月", "2月", "3月", "4月", "5月", "6月"],
+        "labels_interval": 1,
+        "axis1": {
+          "bounds": { "minimum": 0, "maximum": 15000 },
+          "format": "#,#0",
+          "series": {
+            "users": {
+              "name": "ユーザー数",
+              "values": [9800, 10500, 11520, 12480, 13100, 14200]
+            }
+          }
+        },
+        "axis2": {
+          "bounds": { "minimum": 0, "maximum": 1 },
+          "format": "0%",
+          "series": {
+            "retention": {
+              "name": "継続率",
+              "values": [0.62, 0.65, 0.68, 0.7, 0.71, 0.73],
+              "styles": {
+                "shape": { "fill": "ffdd99", "outline": "ffaa55" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
