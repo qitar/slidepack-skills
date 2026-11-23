@@ -46,12 +46,13 @@ Missing/modified S3 params → `403 Forbidden` from AWS.
 POST https://slidepack.io/sessions/{uuid}/render
 Authorization: Bearer {API_TOKEN}
 ```
-Response shape mirrors create-session: `{ session: {...}, download_url }`,
+On success (HTTP 200) the response mirrors create-session: `{ session: {...}, download_url }`,
 where `download_url` is a top-level sibling of `session`.
 
-A failed render still returns **HTTP 200**. Always check `session.render_succeeded`:
-- `session.render_succeeded == true` → use the top-level `download_url`.
-- `session.render_succeeded == false` → read `session.render_message` for the error.
+A failed render returns **HTTP 403** with only `{ "message": "<reason>" }` — no
+`session`, no `download_url`. Check the status code first. The reason is also
+stored on the session: `GET /sessions/{uuid}` then shows `render_succeeded: false`
+and the same `render_message`.
 
 ## 4. Download
 

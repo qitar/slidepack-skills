@@ -9,12 +9,13 @@ This file provides guidance to AI coding agents and human contributors working o
 that, together with a template PPTX, renders a PowerPoint deck through the slidepack.io API.
 
 The format itself is documented by SlidePack's own docs. What this skill adds is help with the
-chart section, where a wrong shape produces no schema error and no rendered output to point at
-the cause. A `series` written as an array instead of an object, a scatter series given flat
-numbers instead of `[x, y]` pairs, a `labels` array nested inside an axis: each of these is
-easy to write and hard to notice. So the skill is built around mechanical checks and worked
-examples rather than prose the model is trusted to remember: `schema/` + `scripts/validate.py`
-catch the shape, `examples/` remove the need to author structure at all.
+chart section. Some chart mistakes fail the render with a clear message, which costs a round
+trip. Others are accepted and dropped without a word: `labels` nested inside an axis, a `title`
+inside the chart object, a chart key that does not match the shape's alt text (the template's
+own sample data stays in the deck). Those are easy to write and hard to notice. So the skill
+is built around mechanical checks and worked examples rather than prose the model is trusted
+to remember: `schema/` + `scripts/validate.py` catch the shape, `examples/` remove the need to
+author structure at all.
 
 Treat that as the design constraint. A change that adds another paragraph of rules to `SKILL.md`
 is usually worse than one that adds an example or a validator diagnostic.
@@ -174,5 +175,5 @@ schema, since that is the change most likely to break examples silently.
 What it cannot check is the half of the system that lives on slidepack.io: whether a payload the
 validator accepts actually renders. There is no fixture for that and no mock API. Verifying a
 real change to `reference/api-workflow.md` or to a chart example means running the 4-step
-sequence against a real template with a real API key, and reading `render_succeeded` /
-`render_message` in the response — a failed render still returns HTTP 200.
+sequence against a real template with a real API key. A failed render returns HTTP 403
+with `{ "message": ... }`; a successful one returns 200 with `session.render_succeeded: true`.

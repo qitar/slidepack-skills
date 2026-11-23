@@ -23,8 +23,8 @@ produce a **correct `data.json`** — verified mechanically, not by hope.
 ## The one rule that matters: validate, don't guess
 
 After you write `data.json`, **always run the bundled validator** and fix every
-error before zipping. This catches the `{` vs `[` chart mistakes that silently
-break renders.
+error before zipping. It catches chart shape mistakes before a render is spent
+on them, and flags the ones the renderer accepts and ignores without a word.
 
 ```bash
 python scripts/run.py validate.py data.json     # ✓ valid  OR  a list of errors with fixes
@@ -116,19 +116,17 @@ template actually has that placeholder — see `reference/data-types.md`
 }
 ```
 
-## Six mistakes that fail silently (no error, blank output)
+## Mistakes the renderer does not report (the template's content or a literal `{key}` stays in the output)
 
 1. **Placeholders under a wrapper.** They go directly on the slide object — never
    under `"data"`, `"content"`, or `"fields"`. Only `"template"` is reserved.
 2. **Chart/table without matching alt text.** Tables and charts bind by the
-   shape's **alt text**, not `{key}`. Mismatch → silently skipped.
+   shape's **alt text**, not `{key}`. Mismatch → left as in the template, sample data included.
 3. **Omitting a placeholder key.** Leaves the literal `{key}` in the output.
    Use `{ "delete": true }` to remove one.
 4. **`theme` inside a slide, or colors not under `theme.colors`.** `theme` is a
    root-level key; colors live under `theme.colors`.
-5. **Not checking `render_succeeded`.** A failed render still returns HTTP 200;
-   the reason is in `render_message`.
-6. **Forgetting the chart-title placeholder.** A leftover literal `{chart-title}`
+5. **Forgetting the chart-title placeholder.** A leftover literal `{chart-title}`
    in the output means the template has that placeholder but `data.json` omitted
    the matching sibling key. Add it. (And don't invent a title key when no such
    placeholder exists — it is silently ignored.) `probe_template.py` lists the
