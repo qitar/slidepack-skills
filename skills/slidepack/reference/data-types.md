@@ -64,7 +64,7 @@ or links.
 | key | type | req | notes |
 |---|---|---|---|
 | `type` | `"list"` | ✓ | |
-| `values` | `string[]` or `object[]` | ✓ | each item: string, or `{ "value", "level", "styles" }` |
+| `values` | `string[]` or `object[]` | ✓ | each item: string, or `{ "type": "text", "value", "level", "styles" }` |
 
 Each list item is a string or a Text object:
 `{ "type": "text", "value": "...", "level": 1 }`.

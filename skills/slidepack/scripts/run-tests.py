@@ -77,7 +77,10 @@ BAD = {
     "series-data-point-styles-wrong-type": chart(type="chart", labels=["a"], axis1={"series": {
         "s": {"name": "A", "values": [1, 2], "data_point_styles": {}}}}),
     "title-key-inside-text": {"slides": [{"template": 1,
-                                          "title": {"value": "Revenue", "chart-title": "oops"}}]},
+                                          "title": {"type": "text", "value": "Revenue", "chart-title": "oops"}}]},
+    "text-type-missing": {"slides": [{"template": 1, "t": {"value": "x"}}]},
+    "list-item-type-missing": {"slides": [{"template": 1, "lst": {"type": "list", "values": [{"value": "x"}]}}]},
+    "table-cell-type-missing": {"slides": [{"template": 1, "tbl": {"type": "table", "rows": [[{"value": "x"}]]}}]},
 }
 
 # GENERIC_SCHEMA_NOISE in validate.py suppresses a raw jsonschema message only when it matches
@@ -103,7 +106,7 @@ WARN = {
     "warn-major-unit-zero": (chart(type="chart", labels=["a"],
                                    axis1={"series": SERIES, "major_unit": 0}), "is 0"),
     "warn-list-item-unknown-key": ({"slides": [{"template": 1, "lst": {
-        "type": "list", "values": [{"value": "Item", "titel": "oops"}]}}]}, "not a list item field"),
+        "type": "list", "values": [{"type": "text", "value": "Item", "titel": "oops"}]}}]}, "not a list item field"),
 }
 
 

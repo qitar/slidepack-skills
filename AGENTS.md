@@ -78,8 +78,9 @@ render a blank chart. `SKILL.md` tells the model to run both when the template i
 published schema is narrower than SlidePack's documented examples, `validate.py` relaxes an **in-memory
 copy** in `apply_compat_shim()` and the deviation is written down in `schema/VERSION.md`.
 
-Two deviations exist today (list items without `type`, series without `name`). If you add a
-third, add the shim *and* the `VERSION.md` entry in the same commit — a silent shim is a rule
+One deviation exists today (series without `name`). Text objects without `type` are
+deliberately not relaxed, though the docs show them; `VERSION.md` says why. If you add a
+second, add the shim *and* the `VERSION.md` entry in the same commit — a silent shim is a rule
 nobody can find later. If a schema refresh fixes one, delete the matching shim lines.
 
 `validate.py` also *reads* the schema at runtime: `load_props()` fills `PROPS` from each chart

@@ -504,6 +504,12 @@ def check_chart(obj, path, findings):
 
 def check_text_like(obj, path, what, findings, skip=()):
     """A Text object — a slide placeholder, a list item, or a table cell."""
+    if "type" not in obj:
+        findings.append(Finding(
+            path,
+            f"{what} object has no `type`.",
+            'Add: "type": "text" (or use a plain string when no options are needed).',
+        ))
     check_unknown_keys(obj, path, "text", what, findings, skip=skip)
     if "styles" in obj:
         check_styles_object(obj["styles"], f"{path}.styles", findings)
@@ -614,10 +620,8 @@ def precheck_slide(slide, idx, findings):
             elif t in NON_CHART_ELEMENT_TYPES:
                 check_element(val, kpath, t, findings)
             elif t is None and "value" in val:
-                # The compat shim (schema/VERSION.md) lets a Text object omit
-                # `type` entirely, so this is a valid, type-less text
-                # placeholder — not an unrecognized element. Still give it the
-                # same unknown-key attention any other text object gets.
+                # A Text object missing its `type`. check_text_like says so
+                # directly instead of leaving it to the schema's `oneOf` dump.
                 check_text_like(val, kpath, "text", findings)
 
 
@@ -670,18 +674,14 @@ def precheck(data, findings):
 # ----------------------------------------------------------------------------
 # The bundled schema (schema/data-json.schema.json) is the official one, kept
 # pristine for reference. But it is stricter than SlidePack's documented,
-# working examples in two places. We relax an in-memory COPY of the schema so
+# working examples in one place. We relax an in-memory COPY of the schema so
 # the validator matches real renderer behaviour rather than rejecting valid
 # payloads. See schema/VERSION.md for the rationale.
 #
-#  1. Text `type` is required by the schema, but the docs show list items as
-#     bare `{ "value": "...", "level": 1 }` (no `type`). Relax: `value` only.
-#  2. Series `name` is required by the schema, but the renderer uses the
-#     series key when it is omitted. Relax: `values` only.
+#  Series `name` is required by the schema, but the renderer uses the series
+#  key when it is omitted. Relax: `values` only.
 def apply_compat_shim(schema):
     defs = schema.get("$defs", {})
-    if "text" in defs:
-        defs["text"]["required"] = ["value"]
     for sd in ("chart-series", "scatter-chart-series"):
         if sd in defs:
             defs[sd]["required"] = ["values"]
