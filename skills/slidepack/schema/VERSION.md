@@ -44,10 +44,12 @@ examples in the documentation validate. The file on disk stays unchanged.
    out not to hold, narrowing the shim to list-item context specifically
    would require restructuring the schema copy (cloning `$defs.text` per call
    site) rather than a one-line `required` change.
-2. **Series `name`** — the schema marks series `name` as required, but the docs
-   allow omitting it when overwriting an existing template series (the template
-   series name is kept). The shim makes only `values` required; `validate.py`
-   emits a non-fatal *warning* when `name` is missing.
+2. **Series `name`** — the schema marks series `name` as required, but the
+   renderer accepts a series without it and uses the series key as its name
+   (confirmed 2026-11-23 for chart and scatter-chart, new and existing series;
+   the docs' dynamic-series recipe omits `name` too). The shim makes only
+   `values` required; `validate.py` emits a non-fatal *warning* when `name` is
+   missing.
 
 If a future schema version fixes these, drop the matching lines in
 `apply_compat_shim()`.

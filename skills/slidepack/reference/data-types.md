@@ -66,7 +66,8 @@ or links.
 | `type` | `"list"` | ✓ | |
 | `values` | `string[]` or `object[]` | ✓ | each item: string, or `{ "value", "level", "styles" }` |
 
-List items use `{ "value": "...", "level": 1 }` — **not** `{ "type":"text", ... }`.
+Each list item is a string or a Text object:
+`{ "type": "text", "value": "...", "level": 1 }`.
 `styles.font` applies; `styles.shape` is ignored in lists.
 
 ## Table  (`"type": "table"`)  →  `examples/table.json`
@@ -137,7 +138,7 @@ text** to the key.
 
 | key | type | req | notes |
 |---|---|---|---|
-| `name` | `string` | ✓* | legend label (*optional only when overwriting a template series) |
+| `name` | `string` | ✓ | legend label |
 | `values` | **`number[]`** | ✓ | flat numbers — one per label |
 | `styles` | `object` | | series-wide color (`styles.shape.fill` / `.outline`) |
 | `data_point_styles` | `object[]` | | per-point styles aligned to `values`; `null` = keep default |
@@ -183,7 +184,7 @@ from your data are deleted, and an axis with no series left is deleted too.
 
 | key | type | req | notes |
 |---|---|---|---|
-| `name` | `string` | ✓* | legend label |
+| `name` | `string` | ✓ | legend label |
 | `values` | **`[number, number][]`** | ✓ | array of `[x, y]` pairs |
 | `styles` | `object` | | series-wide color |
 | `data_point_styles` | `object[]` | | per-point; `null` = keep default |

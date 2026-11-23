@@ -377,13 +377,12 @@ def check_axis(axis, axis_path, is_scatter, findings):
             check_values(s["values"], f"{spath}.values", is_scatter, findings)
 
         if "name" not in s:
-            # The schema marks `name` as required, but the docs allow omitting it
-            # when overwriting an existing template series (the template name is
-            # kept). So this is a warning, not a hard error.
+            # The schema marks `name` as required, but the renderer accepts a
+            # series without one and uses the key. Still a warning: the key
+            # then shows in the legend, which is rarely what was meant.
             findings.append(Finding(
                 spath,
-                "series has no `name`. OK only when overwriting an existing "
-                "template series (its name is kept); otherwise add one.",
+                "series has no `name`, so the series key is used as its name.",
                 'Add: "name": "<series label shown in the legend>"',
                 severity="warning",
             ))
@@ -677,8 +676,8 @@ def precheck(data, findings):
 #
 #  1. Text `type` is required by the schema, but the docs show list items as
 #     bare `{ "value": "...", "level": 1 }` (no `type`). Relax: `value` only.
-#  2. Series `name` is required by the schema, but the docs allow omitting it
-#     when overwriting an existing template series. Relax: `values` only.
+#  2. Series `name` is required by the schema, but the renderer uses the
+#     series key when it is omitted. Relax: `values` only.
 def apply_compat_shim(schema):
     defs = schema.get("$defs", {})
     if "text" in defs:
