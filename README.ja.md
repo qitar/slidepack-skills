@@ -13,6 +13,21 @@
 - **テンプレート検査**：`probe_template.py` がテンプレート PPTX の期待するキーを一覧表示します。`data.json` を併せて指定すると、不足しているキーと未使用のキーを報告します。
 - **リファレンス**：各データ型の概要、API の呼び出し手順、テンプレートの作り方をまとめています。
 
+## インストール
+
+推奨:
+
+```
+npx skills add github.com/qitar/slidepack-skills
+```
+
+手動: このレポジトリをcloneしてから
+
+```
+ln -s skills/slidepack ~/.agents/skills
+```
+
+
 ## 動作環境
 
 - Python 3.8 以上（スクリプトの実行に使用）
@@ -26,36 +41,9 @@ PowerPointアプリそのものは必要ありません。
 
 Pythonパッケージ取得時とslidepack.io API使用時にはClaude Codeによるネットワークアクセスが発生します。
 
-## インストール
+## スキルの使い方
 
-リポジトリをクローンします。
-
-```bash
-git clone https://github.com/qitar/slidepack-skills.git
-cd slidepack-skills
-```
-
-`skills/slidepack` ディレクトリをコピーするとインストールできます。すべてのプロジェクトで使う場合：
-
-```bash
-cp -r skills/slidepack ~/.claude/skills/
-```
-
-特定のプロジェクトで使う場合：
-
-```bash
-cp -r skills/slidepack /path/to/your/project/.claude/skills/
-```
-
-このリポジトリの更新に追従したい場合は、コピーではなくシンボリックリンクを作成します。
-
-```bash
-ln -s "$(pwd)/skills/slidepack" ~/.claude/skills/slidepack
-```
-
-Python のパッケージを手動でインストールする必要はありません。Claude はスクリプトを `scripts/run.py` 経由で起動し、`run.py` が必要なパッケージを PC の Python 環境を変更せずに用意します（詳しくは[スクリプトを単体で使う](#スクリプトを単体で使う)を参照）。
-
-インストール後は、Claude に「template.pptx を使って、この売上データからスライドを作って」のように依頼すると、このスキルが使われます。
+Claude に「template.pptx を使って、この売上データからスライドを作って」のように依頼すると、このスキルが使われます。
 
 ## API トークンの設定
 
@@ -101,8 +89,6 @@ skills/slidepack/
   examples/           要素ごとの data.json
   reference/          データ型、API の手順、テンプレート設計
 ```
-
-インストールの対象は `skills/slidepack/` ディレクトリです。スキルが実行時に使うファイルは、すべてこの中にあります。
 
 ## SlidePack のドキュメント
 

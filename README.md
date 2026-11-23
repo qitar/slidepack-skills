@@ -22,6 +22,20 @@ against SlidePack's official JSON Schema, and walk through the API calls that tu
 - **Reference notes.** A summary of each data type, the API sequence, and how to design a
   template.
 
+## Install
+
+Recommended:
+
+```
+npx skills add github.com/qitar/slidepack-skills
+```
+
+Manual: Clone this repo, then
+
+```
+ln -s skills/slidepack ~/.agents/skills
+```
+
 ## Requirements
 
 - Python 3.8 or later, for the scripts.
@@ -37,39 +51,9 @@ The PowerPoint app itself is not required.
 Your Claude Code needs external network access when fetching Python packages and
 when hitting the slidepack.io API endpoints.
 
-## Install
+## Skill Usage
 
-Clone the repository:
-
-```bash
-git clone https://github.com/qitar/slidepack-skills.git
-cd slidepack-skills
-```
-
-Install the skill by copying the `skills/slidepack` directory. To make it available in every
-project:
-
-```bash
-cp -r skills/slidepack ~/.claude/skills/
-```
-
-To use it in one project:
-
-```bash
-cp -r skills/slidepack /path/to/your/project/.claude/skills/
-```
-
-If you would rather follow this repository as it changes, link it instead:
-
-```bash
-ln -s "$(pwd)/skills/slidepack" ~/.claude/skills/slidepack
-```
-
-You do not need to install any Python packages yourself. Claude starts the scripts through
-`scripts/run.py`, which provides the packages they need without changing your PC's Python
-environment (see [Using the scripts on their own](#using-the-scripts-on-their-own)).
-
-After installing, ask Claude for a deck, for example: "Using template.pptx, make slides from
+Ask Claude for a deck, for example: "Using template.pptx, make slides from
 this sales data."
 
 ## Setting up an API token
@@ -126,8 +110,6 @@ skills/slidepack/
   examples/           one data.json per element type
   reference/          data types, API workflow, template design
 ```
-
-Only `skills/slidepack/` needs to be installed. Everything the skill uses at runtime is inside it.
 
 ## SlidePack documentation
 
