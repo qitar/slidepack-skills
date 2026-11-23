@@ -61,18 +61,18 @@ To get a fresh one: `POST /sessions/{uuid}/download_url`.
 
 ## Expiry limits
 
-| Resource | TTL | When expired |
+| Resource | TTL | What to do when expired |
 |---|---|---|
 | Session | 24 hours | create a new session |
-| S3 upload params | 1 hour | create a new session |
-| Download URL | 5 minutes | `POST /sessions/{uuid}/download_url` |
+| S3 upload params | 1 hour | `GET /sessions/{uuid}` for fresh upload params |
+| Download URL | 5 minutes | `POST /sessions/{uuid}/download_url` for a fresh URL |
 
 Don't cache S3 params across many renders — create a fresh session per render.
 
 ## Zip structure
 
-`template.pptx` and `data.json` must be at the **zip root** (exact filenames).
-Asset files go at the relative paths referenced in `data.json`.
+Put `template.pptx` and `data.json` at the zip root (exact filenames).
+Asset paths in `data.json` are relative to the directory `data.json` is in.
 
 ```
 input.zip
