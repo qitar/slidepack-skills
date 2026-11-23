@@ -32,8 +32,7 @@ Shape alt text: "sales_table"   ↔   "sales_table": { "type": "table", ... }
 ```
 
 Generic alt text like "Chart 1" that doesn't match a key → the table/chart is
-**silently skipped** (no error). This is the #1 cause of "my chart didn't
-update".
+left untouched, with no error. The template's sample data stays in the output.
 
 ## Repeating slides
 
