@@ -2,39 +2,29 @@
 
 [English](README.md)
 
-[SlidePack](https://slidepack.io)（Qitar LLC が提供する、テンプレート PPTX と JSON から PowerPoint を生成するサービス）向けの Claude Skill です。
+[SlidePack](https://slidepack.io)（テンプレート PPTX と JSON から PowerPoint を生成するWeb APIサービス）向けの Claude Skill です。
 
 このスキルを導入すると、Claude が SlidePack に渡す `data.json` を作成し、SlidePack 公式の JSON Schema で検証したうえで、API を呼び出して `.pptx` を生成するまでを一通り進められます。
 
 ## 含まれるもの
 
-- **サンプル**：テキスト、リスト、表、画像、グラフなど、要素の種類ごとにスキーマ検証済みの `data.json` を 1 つずつ用意しています。Claude は構造をゼロから書かず、これを元に値を差し替えます。手作業で `data.json` を書く場合は、ひな形としてそのままコピーして使えます。
-- **バリデーター**：`validate.py` が `data.json` を公式スキーマに照らして検査し、問題点を修正案とともに分かりやすく表示します。誤りが起きやすいグラフの定義は、特に重点的に確認します。
+- **サンプル**：テキスト、リスト、表、画像、グラフなど、要素の種類ごとにスキーマ検証済みの `data.json` を 1 つずつ用意しています。Claude は構造をゼロから書かず、これを元に値を差し替えます。
+- **バリデーター**：`validate.py` が `data.json` を公式スキーマに照らして検査し、問題点を修正案とともに分かりやすく表示します。誤りが起きやすい部分は、スキーマ外のチェックも行います。
 - **テンプレート検査**：`probe_template.py` がテンプレート PPTX の期待するキーを一覧表示します。`data.json` を併せて指定すると、不足しているキーと未使用のキーを報告します。
 - **リファレンス**：各データ型の概要、API の呼び出し手順、テンプレートの作り方をまとめています。
 
 ## 動作環境
 
-- Claude Code（動作を確認しているのはこの環境のみです）
 - Python 3.8 以上（スクリプトの実行に使用）
-- [jsonschema](https://pypi.org/project/jsonschema/)（バリデーターに必要。自動で用意されます）
-- [python-pptx](https://pypi.org/project/python-pptx/)（テンプレート検査に必要。自動で用意されます）
 - SlidePack のアカウントと API トークン（デッキをレンダリングする場合に必要。[API トークンの設定](#api-トークンの設定)を参照）
 
-デッキの生成に PowerPoint アプリケーションは必要ありません。生成された `.pptx` を開くには、PowerPoint、Keynote、Google スライドなど、PPTX に対応したアプリケーションを使います。
+同梱のスクリプト実行時に下記の依存パッケージが必要です（一時的なvenvに自動インストール）:
+- [jsonschema](https://pypi.org/project/jsonschema/)（バリデーターに必要）
+- [python-pptx](https://pypi.org/project/python-pptx/)（テンプレート検査に必要）
 
-## ネットワーク接続が必要になる場面
+PowerPointアプリそのものは必要ありません。
 
-| 作業 | ネットワーク |
-| --- | --- |
-| `data.json` の検証（`validate.py`） | 不要。スキーマは同梱しています |
-| テンプレートの検査（`probe_template.py`） | 不要 |
-| 初回のみ：Python パッケージ（`jsonschema`、`python-pptx`）の取得 | PyPI への通信が必要です。2 回目以降はキャッシュを使います |
-| SlidePack API でのデッキ生成 | 必要。`https://slidepack.io` と、API が返すアップロード先に接続します。認証には API トークンを使います |
-
-社内プロキシやサンドボックス、許可リストなどで外向き通信が制限されている環境では、`slidepack.io` に接続できるようになるまでレンダリングは失敗します。検証とテンプレート検査はこの制限の影響を受けません。検証にこのスキルを使い、レンダリングは別の手段で行う運用が可能です。
-
-claude.ai や Cowork など、Claude Code 以外の環境では動作を確認していません。
+Pythonパッケージ取得時とslidepack.io API使用時にはClaude Codeによるネットワークアクセスが発生します。
 
 ## インストール
 

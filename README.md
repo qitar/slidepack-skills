@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-A Claude Skill for [SlidePack](https://slidepack.io), the service from Qitar LLC that builds
+A Claude Skill for [SlidePack](https://slidepack.io), a web API service that builds
 PowerPoint decks from a template and a JSON file.
 
 With this skill installed, Claude can write the `data.json` that SlidePack needs, check it
@@ -13,10 +13,10 @@ against SlidePack's official JSON Schema, and walk through the API calls that tu
 
 - **Examples.** One `data.json` for each element type, each checked against the schema (text,
   list, table, image, chart and so on). Claude starts from these instead of writing the
-  structure from scratch. If you write a `data.json` by hand, you can copy them as templates.
+  structure from scratch.
 - **A validator.** `validate.py` checks a `data.json` against the official schema and explains
-  each problem it finds in plain language, with a suggested fix. Chart definitions get extra
-  attention, since that is where mistakes are easiest to make.
+  each problem it finds in plain language, with a suggested fix. The most complex parts get extra
+  checks for rules that the schema alone cannot express.
 - **A template inspector.** `probe_template.py` lists the keys a template PPTX expects, and
   with a `data.json` it reports which keys are missing or unused.
 - **Reference notes.** A summary of each data type, the API sequence, and how to design a
@@ -24,31 +24,18 @@ against SlidePack's official JSON Schema, and walk through the API calls that tu
 
 ## Requirements
 
-- Claude Code. This is the only environment the skill has been tested in.
 - Python 3.8 or later, for the scripts.
-- [jsonschema](https://pypi.org/project/jsonschema/) for the validator (set up automatically).
-- [python-pptx](https://pypi.org/project/python-pptx/) for the template inspector (set up automatically).
 - A SlidePack account and API token, if you want to render a deck. See
   [Setting up an API token](#setting-up-an-api-token).
 
-You do not need the PowerPoint application to generate a deck. To open the generated `.pptx`,
-use any application that reads PPTX files, such as PowerPoint, Keynote or Google Slides.
+The bundled scripts require the following (they get set up automatically into ethereal venvs):
+- [jsonschema](https://pypi.org/project/jsonschema/) for the validator
+- [python-pptx](https://pypi.org/project/python-pptx/) for the template inspector
 
-## What needs a network connection
+The PowerPoint app itself is not required.
 
-| Task | Network |
-| --- | --- |
-| Validate a `data.json` (`validate.py`) | Not needed. The schema is bundled. |
-| Inspect a template (`probe_template.py`) | Not needed. |
-| First run only: fetching the Python packages (`jsonschema`, `python-pptx`) | Needed, from PyPI. Later runs reuse the cached packages. |
-| Render a deck through the SlidePack API | Needed. Requests go to `https://slidepack.io` and to the upload URL that the API returns, and are authenticated with your API token. |
-
-If Claude Code runs in an environment that restricts outbound traffic (a corporate proxy, a
-sandbox, an allow-list), the render step will fail until `slidepack.io` is reachable. Validation
-and inspection are not affected. You can also use the skill for validation and render the deck
-by other means.
-
-Environments other than Claude Code, such as claude.ai or Cowork, have not been tested.
+Your Claude Code needs external network access when fetching Python packages and
+when hitting the slidepack.io API endpoints.
 
 ## Install
 
