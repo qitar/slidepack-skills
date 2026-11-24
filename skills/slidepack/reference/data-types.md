@@ -87,7 +87,7 @@ A cell may carry a data bar: `{ "type":"text", "value":"80", "databar": { "ratio
 | key | type | req | notes |
 |---|---|---|---|
 | `type` | `"image"` | ✓ | |
-| `src` | `string` | ✓ | **relative path inside the zip**; jpg/jpeg/gif/png |
+| `src` | `string` | ✓ | path relative to the directory `data.json` is in; jpg/jpeg/gif/png |
 | `scaling` | enum \| null | | `none`(def) \| `contain` \| `cover`; `null` = `none` |
 | `overflow` | enum | | `visible`(def) \| `hidden` |
 
@@ -96,7 +96,7 @@ A cell may carry a data bar: `{ "type":"text", "value":"80", "databar": { "ratio
 | key | type | req | notes |
 |---|---|---|---|
 | `type` | `"video"` | ✓ | |
-| `src` | `string` | ✓ | relative path (mp4/m4v/mov) **or** a YouTube URL |
+| `src` | `string` | ✓ | path relative to the directory `data.json` is in (mp4/m4v/mov) **or** a YouTube URL |
 | `thumbnail` | `string` | | **required for local files**; same aspect ratio |
 | `scaling` | enum \| null | | `contain`(def) \| `cover`; `null` = `contain` |
 
