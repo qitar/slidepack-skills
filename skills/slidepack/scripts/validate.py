@@ -88,16 +88,14 @@ def paint(text, color):
 class Finding:
     """One problem found, with a human-readable location and a fix hint."""
 
-    def __init__(self, path, message, hint=None, severity="error"):
+    def __init__(self, path, message, hint=None):
         self.path = path
         self.message = message
         self.hint = hint
-        self.severity = severity  # "error" (fails) or "warning" (prints only)
 
     def render(self):
         loc = paint(self.path or "(root)", C.CYAN)
-        mark = paint("✗", C.RED) if self.severity == "error" else paint("!", C.YELLOW)
-        out = [f"  {mark} {loc}\n    {self.message}"]
+        out = [f"  {paint('✗', C.RED)} {loc}\n    {self.message}"]
         if self.hint:
             for line in self.hint.splitlines():
                 out.append(f"    {paint('→', C.GREEN)} {line}")
@@ -242,36 +240,6 @@ def _is_number(v):
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
-def check_bounds(bounds, path, findings):
-    """Inverted axis bounds (minimum > maximum) render a blank/broken axis —
-    the schema has no ordering constraint between the two, so nothing else
-    catches this."""
-    if not isinstance(bounds, dict):
-        return  # not a dict at all is a type mismatch handled elsewhere
-    lo, hi = bounds.get("minimum"), bounds.get("maximum")
-    if _is_number(lo) and _is_number(hi) and lo > hi:
-        findings.append(Finding(
-            path,
-            f"`minimum` ({lo}) is greater than `maximum` ({hi}) — the axis "
-            "range is inverted and will render a blank or broken axis.",
-            severity="warning",
-        ))
-
-
-def check_major_unit(value, path, findings):
-    """A gridline interval of exactly 0 renders a blank or broken axis."""
-    if _is_number(value) and value == 0:
-        key = path.rsplit(".", 1)[-1]
-        findings.append(Finding(
-            path,
-            f"`{key}` is 0 — an axis gridline interval of zero typically "
-            "renders a blank or broken axis.",
-            "Use a positive interval, or omit this key to let SlidePack "
-            "choose one automatically.",
-            severity="warning",
-        ))
-
-
 def check_axis(axis, axis_path, is_scatter, findings):
     """Validate a chart-axis / scatter-chart-axis object."""
     if not isinstance(axis, dict):
@@ -296,15 +264,6 @@ def check_axis(axis, axis_path, is_scatter, findings):
         "scatter-chart-axis" if is_scatter else "chart-axis",
         "scatter chart axis" if is_scatter else "chart axis", findings, skip=("labels",),
     )
-
-    if is_scatter:
-        for key in ("x_bounds", "y_bounds"):
-            check_bounds(axis.get(key), f"{axis_path}.{key}", findings)
-        for key in ("x_major_unit", "y_major_unit"):
-            check_major_unit(axis.get(key), f"{axis_path}.{key}", findings)
-    else:
-        check_bounds(axis.get("bounds"), f"{axis_path}.bounds", findings)
-        check_major_unit(axis.get("major_unit"), f"{axis_path}.major_unit", findings)
 
     series = axis["series"]
 
@@ -399,20 +358,6 @@ def check_values(values, vpath, is_scatter, findings):
     if not isinstance(values, list):
         findings.append(Finding(
             vpath, f"`values` must be an array [], got {_typename(values)}.",
-        ))
-        return
-
-    if not values:
-        # Nothing in the schema requires a non-empty `values`, and the loops
-        # below simply don't iterate — so this passes silently by default. A
-        # zero-point series renders as an empty/blank chart with no error,
-        # exactly the class of failure this validator exists to catch.
-        findings.append(Finding(
-            vpath,
-            "`values` is empty — this series will render with no data points.",
-            "OK only if intentionally overwriting a template series with no "
-            "data; otherwise add at least one value.",
-            severity="warning",
         ))
         return
 
@@ -737,24 +682,12 @@ def main():
         seen.add(sig)
         findings.append(fnd)
 
-    errors = [f for f in findings if f.severity == "error"]
-    warnings = [f for f in findings if f.severity == "warning"]
-
-    if not errors:
-        msg = paint("✓ valid", C.GREEN + C.BOLD) + f"  ({target} conforms to the SlidePack schema)"
-        if warnings:
-            msg += paint(f"  — {len(warnings)} warning(s)", C.YELLOW)
-        print(msg + "\n" if warnings else msg)
-        for fnd in warnings:
-            print(fnd.render())
-            print()
+    if not findings:
+        print(paint("✓ valid", C.GREEN + C.BOLD) + f"  ({target} conforms to the SlidePack schema)")
         sys.exit(0)
 
-    print(paint(f"✗ {len(errors)} error(s) found in {target}:", C.RED + C.BOLD) + "\n")
-    for fnd in errors:
-        print(fnd.render())
-        print()
-    for fnd in warnings:
+    print(paint(f"✗ {len(findings)} error(s) found in {target}:", C.RED + C.BOLD) + "\n")
+    for fnd in findings:
         print(fnd.render())
         print()
     print(paint("Fix the errors above, then re-run the validator before zipping.", C.YELLOW))

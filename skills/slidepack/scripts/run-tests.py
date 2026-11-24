@@ -95,20 +95,6 @@ DUP = {
     "dup-slides-not-array": {"slides": {"template": 1}},
 }
 
-# Payloads that pass the schema yet render a blank or partly dropped result. Exit code alone
-# cannot tell "warned as expected" from "said nothing at all", so each needs its warning text:
-#   values: []       a zero-point series renders as a blank chart
-#   inverted bounds  minimum > maximum, and major_unit of exactly 0: a blank or broken axis
-WARN = {
-    "warn-values-empty": (chart(type="chart", labels=["a"],
-                                axis1={"series": {"s": {"name": "A", "values": []}}}), "is empty"),
-    "warn-inverted-bounds": (chart(type="chart", labels=["a"], axis1={
-        "series": SERIES, "bounds": {"minimum": 100, "maximum": 0}}), "is inverted"),
-    "warn-major-unit-zero": (chart(type="chart", labels=["a"],
-                                   axis1={"series": SERIES, "major_unit": 0}), "is 0"),
-}
-
-
 def main():
     for stream in (sys.stdout, sys.stderr):
         try:
@@ -126,16 +112,14 @@ def main():
         except SyntaxError as e:
             fail("scripts/%s  (syntax error: %s)" % (name, e))
 
-    # The model copies these files, so a warning on one teaches it to delete a working field.
-    say("== examples (expect all valid, with no warnings) ==")
+    say("== examples (expect all valid) ==")
     for f in sorted(glob.glob(os.path.join(SKILL_DIR, "examples", "*.json"))):
         label = "examples/" + os.path.basename(f)
         st, out = validate(f)
-        warned = any(ln.startswith("  ! ") for ln in out.splitlines())
-        if st == 0 and not warned:
+        if st == 0:
             ok(label)
         else:
-            fail(label + ("  (expected no warnings)" if st == 0 else "  (expected valid)"))
+            fail(label + "  (expected valid)")
             show(out)
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -167,15 +151,6 @@ def main():
                 ok(name + ".json  1 finding, no duplicate")
             else:
                 fail("%s.json  (expected 1 finding, got %d)" % (name, n))
-                show(out)
-
-        say("== warnings on otherwise-valid payloads (expect exit 0 + specific warning text) ==")
-        for name, (payload, needle) in WARN.items():
-            st, out = validate(write(name, payload))
-            if st == 0 and needle in out:
-                ok(name + ".json  valid, with the expected warning")
-            else:
-                fail('%s.json  (expected exit 0 + a "%s" warning, got exit %d)' % (name, needle, st))
                 show(out)
 
         say("== file encoding (expect BOM accepted, unreadable files exit 2) ==")
