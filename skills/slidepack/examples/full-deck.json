@@ -15,8 +15,8 @@
         "type": "list",
         "values": [
           "Revenue: $4.8M (+16% YoY)",
-          { "value": "New customers: 340", "level": 1 },
-          { "value": "Enterprise: 42 accounts", "level": 1 }
+          { "type": "text", "value": "New customers: 340", "level": 1 },
+          { "type": "text", "value": "Enterprise: 42 accounts", "level": 1 }
         ]
       },
       "revenue_chart": {
@@ -35,7 +35,7 @@
       "template": 2,
       "highlights": {
         "type": "list",
-        "values": ["Segment breakdown", { "value": "By region", "level": 1 }]
+        "values": ["Segment breakdown", { "type": "text", "value": "By region", "level": 1 }]
       },
       "revenue_chart": {
         "type": "scatter-chart",

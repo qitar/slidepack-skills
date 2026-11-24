@@ -9,12 +9,13 @@ This file provides guidance to AI coding agents and human contributors working o
 that, together with a template PPTX, renders a PowerPoint deck through the slidepack.io API.
 
 The format itself is documented by SlidePack's own docs. What this skill adds is help with the
-chart section, where a wrong shape produces no schema error and no rendered output to point at
-the cause. A `series` written as an array instead of an object, a scatter series given flat
-numbers instead of `[x, y]` pairs, a `labels` array nested inside an axis: each of these is
-easy to write and hard to notice. So the skill is built around mechanical checks and worked
-examples rather than prose the model is trusted to remember: `schema/` + `scripts/validate.py`
-catch the shape, `examples/` remove the need to author structure at all.
+chart section. Some chart mistakes fail the render with a clear message, which costs a round
+trip. Others are accepted and dropped without a word: `labels` nested inside an axis, a `title`
+inside the chart object, a chart key that does not match the shape's alt text (the template's
+own sample data stays in the deck). Those are easy to write and hard to notice. So the skill
+is built around mechanical checks and worked examples rather than prose the model is trusted
+to remember: `schema/` + `scripts/validate.py` catch the shape, `examples/` remove the need to
+author structure at all.
 
 Treat that as the design constraint. A change that adds another paragraph of rules to `SKILL.md`
 is usually worse than one that adds an example or a validator diagnostic.
@@ -38,7 +39,7 @@ skills/slidepack/               the distributable skill
 ├── pyproject.toml              runtime deps for uv (`package = false`); not vendored
 ├── schema/
 │   ├── data-json.schema.json   SlidePack's official schema, vendored verbatim — do not edit
-│   └── VERSION.md              source URL, fetch date, refresh steps, documented deviations
+│   └── VERSION.md              source URL, fetch date, refresh steps
 ├── scripts/
 │   ├── run.py                  launcher: supplies deps via uv or a private venv, never the user's Python
 │   ├── validate.py             schema validation + plain-language chart diagnostics
@@ -73,23 +74,17 @@ render a blank chart. `SKILL.md` tells the model to run both when the template i
 ### The vendored schema is pristine
 
 `schema/data-json.schema.json` is fetched verbatim from
-`https://docs.slidepack.io/schemas/data-json.json` and must never be hand-edited. Where the
-published schema is narrower than SlidePack's documented examples, `validate.py` relaxes an **in-memory
-copy** in `apply_compat_shim()` and the deviation is written down in `schema/VERSION.md`.
+`https://docs.slidepack.io/schemas/data-json.json` and must never be hand-edited. The validator
+uses it as is. If the validator ever has to accept something the schema rejects, relax an
+**in-memory copy** in `validate.py` and write the deviation down in `schema/VERSION.md` in the same commit — a silent
+shim is a rule nobody can find later.
 
-Two deviations exist today (list items without `type`, series without `name`). If you add a
-third, add the shim *and* the `VERSION.md` entry in the same commit — a silent shim is a rule
-nobody can find later. If a schema refresh fixes one, delete the matching shim lines.
-
-`validate.py` also *reads* the schema at runtime: `load_props()` fills `PROPS` from each chart
-definition's `properties`, which is what the unknown-key check compares against. The schema leaves
-`additionalProperties` open everywhere, so a key like `title` inside a chart object is accepted and
-then dropped at render time — the check exists to catch that class of silent failure. Because the
-key lists are derived rather than hand-copied, a refresh updates them for free; the hardcoded sets
-in `PROPS` are only a fallback for when the schema cannot be read. An unknown key is a *warning*,
-not an error, on purpose: the bundled schema may lag the live API, and a validator that rejects
-valid payloads is worse than one that lets a typo through with a note. Title-ish keys are the
-exception — those are documented as never-fields, so they fail.
+`validate.py` also *reads* the schema at runtime: `load_props()` fills `PROPS` from each
+definition's `properties`, which is what the unknown-key check compares against. The schema
+rejects unknown keys, but only as a `oneOf` failure on the whole element; the unknown-key check
+exists to name the offending key instead, and reports it as an error, as the schema does. Because the key lists are derived rather than hand-copied, a refresh
+updates them for free; the hardcoded sets in `PROPS` are only a fallback for when the schema
+cannot be read.
 
 Refreshing the schema means re-running `run-tests.py`: the examples are the regression suite for
 that file.
@@ -174,5 +169,5 @@ schema, since that is the change most likely to break examples silently.
 What it cannot check is the half of the system that lives on slidepack.io: whether a payload the
 validator accepts actually renders. There is no fixture for that and no mock API. Verifying a
 real change to `reference/api-workflow.md` or to a chart example means running the 4-step
-sequence against a real template with a real API key, and reading `render_succeeded` /
-`render_message` in the response — a failed render still returns HTTP 200.
+sequence against a real template with a real API key. A failed render returns HTTP 403
+with `{ "message": ... }`; a successful one returns 200 with `session.render_succeeded: true`.

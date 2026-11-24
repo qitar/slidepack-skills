@@ -11,7 +11,7 @@ metadata:
   version: "0.3.0"
   organization: Qitar LLC and manamu Inc.
   schema-source: https://docs.slidepack.io/schemas/data-json.json
-  schema-fetched: "2026-06-10"
+  schema-fetched: "2026-11-24"
 ---
 
 # SlidePack
@@ -23,8 +23,8 @@ produce a **correct `data.json`** — verified mechanically, not by hope.
 ## The one rule that matters: validate, don't guess
 
 After you write `data.json`, **always run the bundled validator** and fix every
-error before zipping. This catches the `{` vs `[` chart mistakes that silently
-break renders.
+error before zipping. It catches chart shape mistakes before a render is spent
+on them, and flags the ones the renderer accepts and ignores without a word.
 
 ```bash
 python scripts/run.py validate.py data.json     # ✓ valid  OR  a list of errors with fixes
@@ -36,10 +36,10 @@ that it cannot set up the environment, tell the user. It checks against the offi
 SlidePack schema bundled in `schema/data-json.schema.json` and adds plain-language
 hints for the common chart traps.
 
-It also rejects the traps the schema itself lets through — a `title` written
-*inside* a chart object, a `theme` inside a slide, colors not under
-`theme.colors` — and warns about any key the schema has no slot for, since the
-renderer ignores those without a word.
+For compatibility, the API accepts some data structures that the official docs
+and schema do not allow, so a render that succeeds does not prove the data is
+right. Validating against the schema locally before calling the API is the
+reliable way.
 
 ## How to build a data.json (the reliable path)
 
@@ -75,10 +75,10 @@ renderer ignores those without a word.
 Charts are where structure goes wrong. The types are fixed:
 
 ```
-type      → "chart" (bar/line/area/pie)  or  "scatter-chart".  Nothing else.
+type      → "scatter-chart" for scatter, "chart" for every other chart.  Nothing else.
 series    → an OBJECT (map):  { "ser1": { "name": "...", "values": [...] } }
             NEVER an array:   [ { "name": "...", "values": [...] } ]   ✗
-chart   values → number[]            [100, 130, 120]
+chart   values → number[]            [100, 130, 120]   (null = no value)
 scatter values → [number,number][]   [[7.1, 5.1], [3.4, 6.9]]
 axis1 / axis2 / bounds / x_bounds → OBJECTS  { ... }
 labels    → at the chart ROOT, never inside an axis
@@ -98,9 +98,9 @@ Minimal correct chart:
 }
 ```
 
-The visual style (bar / line / area / pie) comes from the **template PPTX**, not
-from `data.json` — so it is always `"type": "chart"`. There is no `bar-chart`,
-`line-chart`, `pie-chart`, etc.
+The chart's kind (bar, line, pie, radar, stacked, combination, …) comes from the
+**template PPTX**, not from `data.json` — so it is always `"type": "chart"`, except
+for scatter. There is no `bar-chart`, `line-chart`, `pie-chart`, etc.
 
 **Chart and axis titles are NOT chart fields.** The chart object has no `title`.
 A chart title / axis title is a separate `{key}` text placeholder that sits as a
@@ -116,19 +116,17 @@ template actually has that placeholder — see `reference/data-types.md`
 }
 ```
 
-## Six mistakes that fail silently (no error, blank output)
+## Mistakes the renderer does not report (the template's content or a literal `{key}` stays in the output)
 
 1. **Placeholders under a wrapper.** They go directly on the slide object — never
    under `"data"`, `"content"`, or `"fields"`. Only `"template"` is reserved.
 2. **Chart/table without matching alt text.** Tables and charts bind by the
-   shape's **alt text**, not `{key}`. Mismatch → silently skipped.
+   shape's **alt text**, not `{key}`. Mismatch → left as in the template, sample data included.
 3. **Omitting a placeholder key.** Leaves the literal `{key}` in the output.
    Use `{ "delete": true }` to remove one.
 4. **`theme` inside a slide, or colors not under `theme.colors`.** `theme` is a
    root-level key; colors live under `theme.colors`.
-5. **Not checking `render_succeeded`.** A failed render still returns HTTP 200;
-   the reason is in `render_message`.
-6. **Forgetting the chart-title placeholder.** A leftover literal `{chart-title}`
+5. **Forgetting the chart-title placeholder.** A leftover literal `{chart-title}`
    in the output means the template has that placeholder but `data.json` omitted
    the matching sibling key. Add it. (And don't invent a title key when no such
    placeholder exists — it is silently ignored.) `probe_template.py` lists the
@@ -143,7 +141,7 @@ template actually has that placeholder — see `reference/data-types.md`
 | `scripts/probe_template.py` | Lists the keys a template expects; coverage-checks a data.json (run via `run.py`) |
 | `scripts/run-tests.py` | Self-test: all examples valid, known-bad payloads rejected |
 | `schema/data-json.schema.json` | Official SlidePack data.json JSON Schema (vendored) |
-| `schema/VERSION.md` | Source, refresh steps, documented schema-vs-docs deviations |
+| `schema/VERSION.md` | Source, fetch date, refresh steps |
 | `examples/*.json` | Copy-paste-ready, validated decks — your starting point |
 | `reference/data-types.md` | Condensed type reference for every element |
 | `reference/api-workflow.md` | The 4-step API sequence + expiry limits + zip layout |

@@ -6,12 +6,13 @@ How `data.json` keys bind to shapes in the PowerPoint template.
 
 | Content | How it binds | Where |
 |---|---|---|
-| Text, Image, Video | `{key}` placeholder | inside the shape's text or name |
+| Text, Image, Video | `{key}` placeholder | inside the shape's text |
 | **Table, Chart** | **alt text** | the shape's alt text == the key |
 
 ### `{key}` placeholders (text / image / video)
 
-Put `{key}` literally in a text box, or in an image/video shape's text or name.
+Put `{key}` literally in a text box, or in the text of the shape an image or
+video should replace.
 Keys are **case-sensitive** and must match the `data.json` key exactly.
 
 ```
@@ -31,8 +32,7 @@ Shape alt text: "sales_table"   ↔   "sales_table": { "type": "table", ... }
 ```
 
 Generic alt text like "Chart 1" that doesn't match a key → the table/chart is
-**silently skipped** (no error). This is the #1 cause of "my chart didn't
-update".
+left untouched, with no error. The template's sample data stays in the output.
 
 ## Repeating slides
 

@@ -88,16 +88,14 @@ def paint(text, color):
 class Finding:
     """One problem found, with a human-readable location and a fix hint."""
 
-    def __init__(self, path, message, hint=None, severity="error"):
+    def __init__(self, path, message, hint=None):
         self.path = path
         self.message = message
         self.hint = hint
-        self.severity = severity  # "error" (fails) or "warning" (prints only)
 
     def render(self):
         loc = paint(self.path or "(root)", C.CYAN)
-        mark = paint("✗", C.RED) if self.severity == "error" else paint("!", C.YELLOW)
-        out = [f"  {mark} {loc}\n    {self.message}"]
+        out = [f"  {paint('✗', C.RED)} {loc}\n    {self.message}"]
         if self.hint:
             for line in self.hint.splitlines():
                 out.append(f"    {paint('→', C.GREEN)} {line}")
@@ -115,18 +113,13 @@ INVALID_CHART_TYPES = {
     "bar", "line", "area", "pie", "donut", "column",
 }
 WRAPPER_KEYS = {"data", "content", "fields", "items", "placeholders", "values_map"}
-THEME_COLOR_KEYS = {
-    "lt1", "dk1", "lt2", "dk2",
-    "accent1", "accent2", "accent3", "accent4", "accent5", "accent6",
-    "hlink", "folHlink",
-}
 
-# Which keys each chart-ish object may carry. The schema leaves
-# `additionalProperties` open on all of them, so an unknown key is accepted and
-# then ignored at render time — silently. These sets are only the fallback;
+# Which keys each object may carry, so the unknown-key check can name the
+# offending key. (The schema rejects unknown keys too, but reports them as a
+# `oneOf` failure on the whole element.) These sets are only the fallback;
 # main() refreshes them from the bundled schema via load_props(), so following
 # the refresh procedure in schema/VERSION.md keeps this check accurate without
-# anyone having to edit this file.
+# anyone editing this file.
 PROPS = {
     "chart": {
         "type", "labels", "labels_interval", "date_labels", "date_labels_format",
@@ -148,12 +141,11 @@ PROPS = {
     "table": {"type", "rows", "horizontal_sizing", "vertical_sizing"},
     "image": {"type", "src", "scaling", "overflow"},
     "video": {"type", "src", "thumbnail", "scaling"},
+    "databar": {"ratio", "color"},
 }
 
-# Element types with a PROPS entry above, checked the same way chart-family
-# objects are: unknown keys get the same "dropped silently at render" warning
-# (or hard error, for a title-ish key) that chart/axis/series objects already
-# get from check_unknown_keys.
+# Element types with a PROPS entry above, checked for unknown keys the same way
+# chart-family objects are.
 NON_CHART_ELEMENT_TYPES = {"text", "list", "table", "image", "video"}
 
 
@@ -193,10 +185,9 @@ def _typename(v):
 def check_unknown_keys(obj, path, defname, what, findings, skip=()):
     """Flag keys the schema has no slot for — the renderer drops them in silence.
 
-    A title-ish key is the documented form of this mistake: a chart has no
-    `title` field, because chart and axis titles are ordinary text placeholders
-    filled as SIBLINGS of the chart. That one is an error. Any other unknown key
-    is a warning only, since the bundled schema may simply be older than the API.
+    A title-ish key gets its own message: a chart has no `title` field, because
+    chart and axis titles are ordinary text placeholders filled as SIBLINGS of
+    the chart.
     """
     allowed = PROPS.get(defname, set())
     for key in obj:
@@ -215,11 +206,9 @@ def check_unknown_keys(obj, path, defname, what, findings, skip=()):
         else:
             findings.append(Finding(
                 "%s.%s" % (path, key),
-                "`%s` is not a %s field in the bundled schema. Unknown keys are "
-                "ignored at render time without an error." % (key, what),
-                "Check the spelling, or refresh the schema (schema/VERSION.md) if "
-                "SlidePack has added this field.",
-                severity="warning",
+                "`%s` is not a %s field. The schema does not allow it, and the "
+                "renderer ignores it without an error." % (key, what),
+                "Check the spelling.",
             ))
 
 
@@ -251,36 +240,6 @@ def _is_number(v):
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
-def check_bounds(bounds, path, findings):
-    """Inverted axis bounds (minimum > maximum) render a blank/broken axis —
-    the schema has no ordering constraint between the two, so nothing else
-    catches this."""
-    if not isinstance(bounds, dict):
-        return  # not a dict at all is a type mismatch handled elsewhere
-    lo, hi = bounds.get("minimum"), bounds.get("maximum")
-    if _is_number(lo) and _is_number(hi) and lo > hi:
-        findings.append(Finding(
-            path,
-            f"`minimum` ({lo}) is greater than `maximum` ({hi}) — the axis "
-            "range is inverted and will render a blank or broken axis.",
-            severity="warning",
-        ))
-
-
-def check_major_unit(value, path, findings):
-    """A gridline interval of exactly 0 renders a blank or broken axis."""
-    if _is_number(value) and value == 0:
-        key = path.rsplit(".", 1)[-1]
-        findings.append(Finding(
-            path,
-            f"`{key}` is 0 — an axis gridline interval of zero typically "
-            "renders a blank or broken axis.",
-            "Use a positive interval, or omit this key to let SlidePack "
-            "choose one automatically.",
-            severity="warning",
-        ))
-
-
 def check_axis(axis, axis_path, is_scatter, findings):
     """Validate a chart-axis / scatter-chart-axis object."""
     if not isinstance(axis, dict):
@@ -305,15 +264,6 @@ def check_axis(axis, axis_path, is_scatter, findings):
         "scatter-chart-axis" if is_scatter else "chart-axis",
         "scatter chart axis" if is_scatter else "chart axis", findings, skip=("labels",),
     )
-
-    if is_scatter:
-        for key in ("x_bounds", "y_bounds"):
-            check_bounds(axis.get(key), f"{axis_path}.{key}", findings)
-        for key in ("x_major_unit", "y_major_unit"):
-            check_major_unit(axis.get(key), f"{axis_path}.{key}", findings)
-    else:
-        check_bounds(axis.get("bounds"), f"{axis_path}.bounds", findings)
-        check_major_unit(axis.get("major_unit"), f"{axis_path}.major_unit", findings)
 
     series = axis["series"]
 
@@ -376,18 +326,7 @@ def check_axis(axis, axis_path, is_scatter, findings):
         else:
             check_values(s["values"], f"{spath}.values", is_scatter, findings)
 
-        if "name" not in s:
-            # The schema marks `name` as required, but the docs allow omitting it
-            # when overwriting an existing template series (the template name is
-            # kept). So this is a warning, not a hard error.
-            findings.append(Finding(
-                spath,
-                "series has no `name`. OK only when overwriting an existing "
-                "template series (its name is kept); otherwise add one.",
-                'Add: "name": "<series label shown in the legend>"',
-                severity="warning",
-            ))
-        elif not isinstance(s["name"], str):
+        if "name" in s and not isinstance(s["name"], str):
             # A wrong-typed `name` has nothing in check_unknown_keys or
             # check_values to catch it, so it otherwise falls all the way
             # through to the schema's oneOf and dumps the whole series object
@@ -422,25 +361,11 @@ def check_values(values, vpath, is_scatter, findings):
         ))
         return
 
-    if not values:
-        # Nothing in the schema requires a non-empty `values`, and the loops
-        # below simply don't iterate — so this passes silently by default. A
-        # zero-point series renders as an empty/blank chart with no error,
-        # exactly the class of failure this validator exists to catch.
-        findings.append(Finding(
-            vpath,
-            "`values` is empty — this series will render with no data points.",
-            "OK only if intentionally overwriting a template series with no "
-            "data; otherwise add at least one value.",
-            severity="warning",
-        ))
-        return
-
     if is_scatter:
         # scatter values MUST be [x, y] tuples.
         for i, pt in enumerate(values):
             if not (isinstance(pt, list) and len(pt) == 2
-                    and all(isinstance(n, (int, float)) and not isinstance(n, bool) for n in pt)):
+                    and all(_is_number(n) for n in pt)):
                 findings.append(Finding(
                     f"{vpath}[{i}]",
                     "scatter-chart values must be [x, y] number pairs.",
@@ -460,10 +385,10 @@ def check_values(values, vpath, is_scatter, findings):
                     'RIGHT: "values": [ 100, 130 ]',
                 ))
                 return
-            if not isinstance(n, (int, float)) or isinstance(n, bool):
+            if n is not None and not _is_number(n):
                 findings.append(Finding(
                     f"{vpath}[{i}]",
-                    f"chart values must be numbers, got {_typename(n)} at index {i}.",
+                    f"chart values must be numbers or null, got {_typename(n)} at index {i}.",
                 ))
                 return
 
@@ -505,6 +430,12 @@ def check_chart(obj, path, findings):
 
 def check_text_like(obj, path, what, findings, skip=()):
     """A Text object — a slide placeholder, a list item, or a table cell."""
+    if "type" not in obj:
+        findings.append(Finding(
+            path,
+            f"{what} object has no `type`.",
+            'Add: "type": "text" (or use a plain string when no options are needed).',
+        ))
     check_unknown_keys(obj, path, "text", what, findings, skip=skip)
     if "styles" in obj:
         check_styles_object(obj["styles"], f"{path}.styles", findings)
@@ -538,10 +469,12 @@ def check_element(obj, path, t, findings):
                     for ci, cell in enumerate(row):
                         if isinstance(cell, dict):
                             # The schema defines a cell as a Text object plus `databar`.
-                            check_text_like(
-                                cell, f"{path}.rows[{ri}][{ci}]", "table cell", findings,
-                                skip=("databar",),
-                            )
+                            cpath = f"{path}.rows[{ri}][{ci}]"
+                            check_text_like(cell, cpath, "table cell", findings,
+                                            skip=("databar",))
+                            if isinstance(cell.get("databar"), dict):
+                                check_unknown_keys(cell["databar"], f"{cpath}.databar",
+                                                   "databar", "databar", findings)
 
 
 def precheck_slide(slide, idx, findings):
@@ -585,8 +518,8 @@ def precheck_slide(slide, idx, findings):
                 findings.append(Finding(
                     kpath,
                     f'invalid chart type "{t}". Only "chart" and "scatter-chart" exist.',
-                    'Use "type": "chart" for bar/line/area/pie (the visual style comes '
-                    'from the template), or "type": "scatter-chart" for scatter.',
+                    'Use "type": "scatter-chart" for scatter, and "type": "chart" for every '
+                    'other chart (its kind comes from the template).',
                 ))
             elif t in ("chart", "scatter-chart"):
                 check_chart(val, kpath, findings)
@@ -601,24 +534,22 @@ def precheck_slide(slide, idx, findings):
                         kpath,
                         "chart object has no `type` key. Only \"chart\" and "
                         '"scatter-chart" exist.',
-                        'Add: "type": "chart" for bar/line/area/pie, or "type": '
-                        '"scatter-chart" for scatter.',
+                        'Add: "type": "scatter-chart" for scatter, or "type": '
+                        '"chart" for every other chart.',
                     ))
                 else:
                     findings.append(Finding(
                         kpath,
                         f'unrecognized chart type "{t}". Only "chart" and '
                         '"scatter-chart" exist, spelled exactly (case-sensitive).',
-                        'Use "type": "chart" for bar/line/area/pie, or "type": '
-                        '"scatter-chart" for scatter.',
+                        'Use "type": "scatter-chart" for scatter, or "type": '
+                        '"chart" for every other chart.',
                     ))
             elif t in NON_CHART_ELEMENT_TYPES:
                 check_element(val, kpath, t, findings)
             elif t is None and "value" in val:
-                # The compat shim (schema/VERSION.md) lets a Text object omit
-                # `type` entirely, so this is a valid, type-less text
-                # placeholder — not an unrecognized element. Still give it the
-                # same unknown-key attention any other text object gets.
+                # A Text object missing its `type`. check_text_like says so
+                # directly instead of leaving it to the schema's `oneOf` dump.
                 check_text_like(val, kpath, "text", findings)
 
 
@@ -638,22 +569,6 @@ def precheck(data, findings):
         findings.append(Finding("(root)", f"root must be an object, got {_typename(data)}."))
         return
 
-    # Colors go under theme.colors; on `theme` directly they are silently dropped.
-    # Checked even when `colors` is ALSO present — a stray key alongside a
-    # correctly-nested `colors` object is just as silently dropped as one with
-    # no `colors` object at all.
-    theme = data.get("theme")
-    if isinstance(theme, dict):
-        stray = sorted(k for k in theme if k in THEME_COLOR_KEYS)
-        if stray:
-            findings.append(Finding(
-                "theme",
-                "theme colors must sit under `theme.colors`, not directly on "
-                "`theme` (found: %s)." % ", ".join(stray),
-                'WRONG: "theme": { "accent1": "f6ad5c" }\n'
-                'RIGHT: "theme": { "colors": { "accent1": "f6ad5c" } }',
-            ))
-
     slides = data.get("slides")
     if slides is None:
         findings.append(Finding("(root)", "root is missing the required `slides` array."))
@@ -664,29 +579,6 @@ def precheck(data, findings):
 
     for i, slide in enumerate(slides):
         precheck_slide(slide, i, findings)
-
-
-# ----------------------------------------------------------------------------
-# Compatibility shim
-# ----------------------------------------------------------------------------
-# The bundled schema (schema/data-json.schema.json) is the official one, kept
-# pristine for reference. But it is stricter than SlidePack's documented,
-# working examples in two places. We relax an in-memory COPY of the schema so
-# the validator matches real renderer behaviour rather than rejecting valid
-# payloads. See schema/VERSION.md for the rationale.
-#
-#  1. Text `type` is required by the schema, but the docs show list items as
-#     bare `{ "value": "...", "level": 1 }` (no `type`). Relax: `value` only.
-#  2. Series `name` is required by the schema, but the docs allow omitting it
-#     when overwriting an existing template series. Relax: `values` only.
-def apply_compat_shim(schema):
-    defs = schema.get("$defs", {})
-    if "text" in defs:
-        defs["text"]["required"] = ["value"]
-    for sd in ("chart-series", "scatter-chart-series"):
-        if sd in defs:
-            defs[sd]["required"] = ["values"]
-    return schema
 
 
 # ----------------------------------------------------------------------------
@@ -754,7 +646,6 @@ def main():
         print(paint("ERROR: ", C.RED) + f"could not load bundled schema: {e}", file=sys.stderr)
         sys.exit(2)
 
-    apply_compat_shim(schema)
     load_props(schema)
 
     # 1) Friendly pre-checks for the common chart traps.
@@ -791,24 +682,12 @@ def main():
         seen.add(sig)
         findings.append(fnd)
 
-    errors = [f for f in findings if f.severity == "error"]
-    warnings = [f for f in findings if f.severity == "warning"]
-
-    if not errors:
-        msg = paint("✓ valid", C.GREEN + C.BOLD) + f"  ({target} conforms to the SlidePack schema)"
-        if warnings:
-            msg += paint(f"  — {len(warnings)} warning(s)", C.YELLOW)
-        print(msg + "\n" if warnings else msg)
-        for fnd in warnings:
-            print(fnd.render())
-            print()
+    if not findings:
+        print(paint("✓ valid", C.GREEN + C.BOLD) + f"  ({target} conforms to the SlidePack schema)")
         sys.exit(0)
 
-    print(paint(f"✗ {len(errors)} error(s) found in {target}:", C.RED + C.BOLD) + "\n")
-    for fnd in errors:
-        print(fnd.render())
-        print()
-    for fnd in warnings:
+    print(paint(f"✗ {len(findings)} error(s) found in {target}:", C.RED + C.BOLD) + "\n")
+    for fnd in findings:
         print(fnd.render())
         print()
     print(paint("Fix the errors above, then re-run the validator before zipping.", C.YELLOW))

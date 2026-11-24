@@ -18,6 +18,7 @@ through a fixed **4-step sequence**. Each step needs output from the previous.
 ```
 POST https://slidepack.io/sessions
 Authorization: Bearer {API_TOKEN}
+Accept: application/json
 ```
 Response contains two objects: `session` (with `uuid` etc.) and `upload`
 (`{ action, method, enctype, params: { ... } }`). The session id is
@@ -45,13 +46,15 @@ Missing/modified S3 params → `403 Forbidden` from AWS.
 ```
 POST https://slidepack.io/sessions/{uuid}/render
 Authorization: Bearer {API_TOKEN}
+Accept: application/json
 ```
-Response shape mirrors create-session: `{ session: {...}, download_url }`,
+On success (HTTP 200) the response mirrors create-session: `{ session: {...}, download_url }`,
 where `download_url` is a top-level sibling of `session`.
 
-A failed render still returns **HTTP 200**. Always check `session.render_succeeded`:
-- `session.render_succeeded == true` → use the top-level `download_url`.
-- `session.render_succeeded == false` → read `session.render_message` for the error.
+A failed render returns **HTTP 403** with only `{ "message": "<reason>" }` — no
+`session`, no `download_url`. Check the status code first. The reason is also
+stored on the session: `GET /sessions/{uuid}` then shows `render_succeeded: false`
+and the same `render_message`.
 
 ## 4. Download
 
@@ -60,18 +63,18 @@ To get a fresh one: `POST /sessions/{uuid}/download_url`.
 
 ## Expiry limits
 
-| Resource | TTL | When expired |
+| Resource | TTL | What to do when expired |
 |---|---|---|
 | Session | 24 hours | create a new session |
-| S3 upload params | 1 hour | create a new session |
-| Download URL | 5 minutes | `POST /sessions/{uuid}/download_url` |
+| S3 upload params | 1 hour | `GET /sessions/{uuid}` for fresh upload params |
+| Download URL | 5 minutes | `POST /sessions/{uuid}/download_url` for a fresh URL |
 
 Don't cache S3 params across many renders — create a fresh session per render.
 
 ## Zip structure
 
-`template.pptx` and `data.json` must be at the **zip root** (exact filenames).
-Asset files go at the relative paths referenced in `data.json`.
+Put `template.pptx` and `data.json` at the zip root (exact filenames).
+Asset paths in `data.json` are relative to the directory `data.json` is in.
 
 ```
 input.zip
@@ -90,10 +93,8 @@ zip -r input.zip template.pptx data.json images/ videos/   # with assets
 
 ```
 uuid                string        session id
-created_at          string        UTC timestamp. Docs show ISO 8601
-                                  ("2020-08-13T13:14:32.000000Z") but the live API
-                                  has returned "YYYY-MM-DD HH:MM:SS" — parse defensively.
-rendered_at         string|null
+created_at          string        UTC, "YYYY-MM-DD HH:MM:SS"
+rendered_at         string|null   UTC, "YYYY-MM-DD HH:MM:SS"
 render_succeeded    boolean|null  ← check before downloading
 render_slide_count  integer|null
 render_message      string|null   error detail when render_succeeded is false
