@@ -18,6 +18,7 @@ through a fixed **4-step sequence**. Each step needs output from the previous.
 ```
 POST https://slidepack.io/sessions
 Authorization: Bearer {API_TOKEN}
+Accept: application/json
 ```
 Response contains two objects: `session` (with `uuid` etc.) and `upload`
 (`{ action, method, enctype, params: { ... } }`). The session id is
@@ -45,6 +46,7 @@ Missing/modified S3 params → `403 Forbidden` from AWS.
 ```
 POST https://slidepack.io/sessions/{uuid}/render
 Authorization: Bearer {API_TOKEN}
+Accept: application/json
 ```
 On success (HTTP 200) the response mirrors create-session: `{ session: {...}, download_url }`,
 where `download_url` is a top-level sibling of `session`.
@@ -91,10 +93,8 @@ zip -r input.zip template.pptx data.json images/ videos/   # with assets
 
 ```
 uuid                string        session id
-created_at          string        UTC timestamp. Docs show ISO 8601
-                                  ("2020-08-13T13:14:32.000000Z") but the live API
-                                  has returned "YYYY-MM-DD HH:MM:SS" — parse defensively.
-rendered_at         string|null
+created_at          string        UTC, "YYYY-MM-DD HH:MM:SS"
+rendered_at         string|null   UTC, "YYYY-MM-DD HH:MM:SS"
 render_succeeded    boolean|null  ← check before downloading
 render_slide_count  integer|null
 render_message      string|null   error detail when render_succeeded is false

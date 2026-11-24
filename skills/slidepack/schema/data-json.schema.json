@@ -7,6 +7,7 @@
   "$defs": {
     "root": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["slides"],
       "x-doc-properties": ["slides", "theme"],
       "properties": {
@@ -40,7 +41,7 @@
       "additionalProperties": {
         "oneOf": [
           { "type": "string" },
-          { "$ref": "#/$defs/text" },
+          { "$ref": "#/$defs/text", "unevaluatedProperties": false },
           { "$ref": "#/$defs/table" },
           { "$ref": "#/$defs/chart" },
           { "$ref": "#/$defs/scatter-chart" },
@@ -52,6 +53,7 @@
       }
     },
     "text": {
+      "$comment": "Not closed here so that table cells can add databar. Each reference closes it with unevaluatedProperties.",
       "type": "object",
       "required": ["type", "value"],
       "x-doc-properties": ["type", "value", "styles", "hyperlink", "level"],
@@ -90,6 +92,7 @@
     },
     "table": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type", "rows"],
       "x-doc-properties": [
         "type",
@@ -133,7 +136,8 @@
                   "$ref": "#/$defs/text",
                   "properties": {
                     "databar": { "$ref": "#/$defs/databar" }
-                  }
+                  },
+                  "unevaluatedProperties": false
                 }
               ]
             }
@@ -157,6 +161,7 @@
     },
     "chart": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type", "axis1"],
       "x-doc-properties": [
         "type",
@@ -167,7 +172,8 @@
         "date_labels_major_unit",
         "date_labels_major_time_unit",
         "axis1",
-        "axis2"
+        "axis2",
+        "blanks"
       ],
       "properties": {
         "type": {
@@ -192,8 +198,8 @@
           "type": "array",
           "items": { "type": "integer" },
           "x-display-type": "integer[]",
-          "description": "Array of numerical values that are displayed as category labels.\nSpecify this instead of `labels` to use the \"Date axis\" format.\nValues are Excel date values: integers that denote the number of days since Jan 1, 1900.\nFor example, November 11, 2022 is `44881`.",
-          "description-ja": "項目ラベルとして表示する日付を数値で表した配列。\n`labels`の代わりにこちらを指定することで、日付軸項目ラベルに切り替わります。\n各値はExcelの日付数値、つまり1900年1月1日からの日数を表した整数です。\n例えば2022年11月11日は`44881`になります。"
+          "description": "Array of numerical values that are displayed as category labels.\nSpecify this instead of `labels` to use the \"Date axis\" format.\nValues are Excel serial dates: integers where Jan 1, 1900 is `1`.\nFor example, November 11, 2022 is `44876`.",
+          "description-ja": "項目ラベルとして表示する日付を数値で表した配列。\n`labels`の代わりにこちらを指定することで、日付軸項目ラベルに切り替わります。\n各値はExcelの日付シリアル値、つまり1900年1月1日を`1`とする整数です。\n例えば2022年11月11日は`44876`になります。"
         },
         "date_labels_format": {
           "type": "string",
@@ -222,11 +228,19 @@
           "$ref": "#/$defs/chart-axis",
           "description": "Data for the secondary value axis. Schema is identical to `axis1`.",
           "description-ja": "第2軸のデータ。形式は`axis1`と同じです。"
+        },
+        "blanks": {
+          "type": "string",
+          "enum": ["gap", "span", "zero"],
+          "x-display-type": "string enum",
+          "description": "How `null` elements in series `values` are displayed.\n- `gap` - Leave a gap.\n- `span` - Connect data points with a line.\n- `zero` - Display as zero.\nIf omitted, the template chart's setting is kept.",
+          "description-ja": "系列の`values`の`null`要素の表示方法。\n- `gap` - 空白にします。\n- `span` - 前後のデータ要素を線で結びます。\n- `zero` - ゼロとして表示します。\n省略した場合はテンプレートのグラフの設定のままになります。"
         }
       }
     },
     "chart-axis": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["series"],
       "x-doc-properties": [
         "series",
@@ -255,6 +269,7 @@
         },
         "bounds": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Display range of the value axis.",
           "description-ja": "値軸の表示範囲。",
           "properties": {
@@ -284,20 +299,21 @@
     },
     "chart-series": {
       "type": "object",
-      "required": ["name", "values"],
+      "additionalProperties": false,
+      "required": ["values"],
       "x-doc-properties": ["name", "values", "styles", "data_point_styles"],
       "properties": {
         "name": {
           "type": "string",
-          "description": "New name for the series. This name may appear, for example, in the chart legend.",
-          "description-ja": "系列の新しい名前。凡例などに反映されます。"
+          "description": "New name for the series. This name may appear, for example, in the chart legend.\nIf omitted, the series key is used as the name.",
+          "description-ja": "系列の新しい名前。凡例などに反映されます。\n省略すると、系列のキーがそのまま名前になります。"
         },
         "values": {
           "type": "array",
-          "items": { "type": "number" },
-          "x-display-type": "number[]",
-          "description": "Array of series data point values.",
-          "description-ja": "系列の数値の配列。"
+          "items": { "type": ["number", "null"] },
+          "x-display-type": "(number or null)[]",
+          "description": "Array of series data point values.\nUse `null` elements for data points with no value. Set how they are displayed with the chart's `blanks`.",
+          "description-ja": "系列の数値の配列。\n値の無いデータ要素には `null` を指定します。表示方法はグラフの`blanks`で設定します。"
         },
         "styles": {
           "$ref": "#/$defs/styles",
@@ -318,6 +334,7 @@
     },
     "scatter-chart": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type", "axis1"],
       "x-doc-properties": [
         "type",
@@ -346,6 +363,7 @@
     },
     "scatter-chart-axis": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["series"],
       "x-doc-properties": [
         "series",
@@ -379,6 +397,7 @@
         },
         "x_bounds": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Display range of the X axis.",
           "description-ja": "X軸の表示範囲。",
           "properties": {
@@ -406,6 +425,7 @@
         },
         "y_bounds": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Display range of the Y axis.",
           "description-ja": "Y軸の表示範囲。",
           "properties": {
@@ -435,13 +455,14 @@
     },
     "scatter-chart-series": {
       "type": "object",
-      "required": ["name", "values"],
+      "additionalProperties": false,
+      "required": ["values"],
       "x-doc-properties": ["name", "values", "styles", "data_point_styles"],
       "properties": {
         "name": {
           "type": "string",
-          "description": "New name for the series. This name may appear, for example, in the chart legend.",
-          "description-ja": "系列の新しい名前。凡例などに反映されます。"
+          "description": "New name for the series. This name may appear, for example, in the chart legend.\nIf omitted, the series key is used as the name.",
+          "description-ja": "系列の新しい名前。凡例などに反映されます。\n省略すると、系列のキーがそのまま名前になります。"
         },
         "values": {
           "type": "array",
@@ -474,6 +495,7 @@
     },
     "list": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type", "values"],
       "x-doc-properties": [
         "type",
@@ -493,13 +515,14 @@
           "description": "List items. May be a mixture of [Text objects](#text) and string shorthands.",
           "description-ja": "箇条書きの項目の配列。\n各値は[Textオブジェクト](#text)あるいは文字列（混合でも問題ありません）。",
           "items": {
-            "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/text" }]
+            "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/text", "unevaluatedProperties": false }]
           }
         }
       }
     },
     "image": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type", "src"],
       "x-doc-properties": ["type", "src", "scaling", "overflow"],
       "properties": {
@@ -515,11 +538,11 @@
           "description-ja": "画像ファイルをzip内に格納し、`data.json`があるディレクトリからの相対パスを指定してください。\n対応形式は `jpg`, `jpeg`, `gif`, `png` です。"
         },
         "scaling": {
-          "type": "string",
-          "enum": ["none", "contain", "cover"],
-          "x-display-type": "string enum",
-          "description": "Specifies how the image should be scaled.\n- `none` (default) - Use the image intrinsic size.\n- `contain` - Scale so that the entire image fits within the target shape.\n- `cover` - Scale so that the image fills the target shape. Image may overflow.",
-          "description-ja": "画像の配置サイズ挙動。\n- `none`（デフォルト） - 画像本来の大きさのまま配置します。\n- `contain` - 画像全体が置換先の図形いっぱいに収まる大きさで配置します。\n- `cover` - 画像が置換先の図形を覆い隠す大きさで配置します。図形から画像がはみ出すことがあります。"
+          "type": ["string", "null"],
+          "enum": ["none", "contain", "cover", null],
+          "x-display-type": "string enum or null",
+          "description": "Specifies how the image should be scaled.\n- `none` (default) - Use the image intrinsic size. `null` is the same as `none`.\n- `contain` - Scale so that the entire image fits within the target shape.\n- `cover` - Scale so that the image fills the target shape. Image may overflow.",
+          "description-ja": "画像の配置サイズ挙動。\n- `none`（デフォルト） - 画像本来の大きさのまま配置します。`null`を指定した場合も同じです。\n- `contain` - 画像全体が置換先の図形いっぱいに収まる大きさで配置します。\n- `cover` - 画像が置換先の図形を覆い隠す大きさで配置します。図形から画像がはみ出すことがあります。"
         },
         "overflow": {
           "type": "string",
@@ -532,6 +555,7 @@
     },
     "video": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type", "src"],
       "x-doc-properties": ["type", "src", "thumbnail", "scaling"],
       "properties": {
@@ -552,16 +576,17 @@
           "description-ja": "動画が再生されるまでの間に表示される画像。\nローカル動画ファイルの場合は必須。\n動画自体と同じ縦横比の画像を使用してください。\n画像ファイルをzip内に格納し、`data.json`があるディレクトリからの相対パスを指定してください。\n対応形式は `jpg`, `jpeg`, `gif`, `png` です。"
         },
         "scaling": {
-          "type": "string",
-          "enum": ["contain", "cover"],
-          "x-display-type": "string enum",
-          "description": "Specifies how the video should be scaled.\n- `contain` (default) - Scale so that the entire video fits within the target shape.\n- `cover` - Scale so that the video fills the target shape. Video may overflow.",
-          "description-ja": "動画の配置サイズ挙動。\n- `contain`（デフォルト） - 動画全体が置換先の図形いっぱいに収まる大きさで配置します。\n- `cover` - 動画が置換先の図形を覆い隠す大きさで配置します。図形から動画がはみ出すことがあります。"
+          "type": ["string", "null"],
+          "enum": ["contain", "cover", null],
+          "x-display-type": "string enum or null",
+          "description": "Specifies how the video should be scaled.\n- `contain` (default) - Scale so that the entire video fits within the target shape. `null` is the same as `contain`.\n- `cover` - Scale so that the video fills the target shape. Video may overflow.",
+          "description-ja": "動画の配置サイズ挙動。\n- `contain`（デフォルト） - 動画全体が置換先の図形いっぱいに収まる大きさで配置します。`null`を指定した場合も同じです。\n- `cover` - 動画が置換先の図形を覆い隠す大きさで配置します。図形から動画がはみ出すことがあります。"
         }
       }
     },
     "styles": {
       "type": "object",
+      "additionalProperties": false,
       "x-doc-properties": [
         "font",
         "font.typeface",
@@ -573,6 +598,10 @@
         "font.strike",
         "shape",
         "shape.outline",
+        "shape.outline_t",
+        "shape.outline_b",
+        "shape.outline_l",
+        "shape.outline_r",
         "shape.fill",
         "shape.align",
         "shape.vertical_align"
@@ -580,6 +609,7 @@
       "properties": {
         "font": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Font styles.",
           "description-ja": "フォントに関するスタイル。",
           "properties": {
@@ -589,7 +619,7 @@
               "description-ja": "文字の書体。`\"Arial\"` や `\"Calibri\"`など。"
             },
             "size": {
-              "type": "number",
+              "type": "integer",
               "description": "Changes the text font size, in points.",
               "description-ja": "文字の大きさ（単位はポイント）。"
             },
@@ -622,6 +652,7 @@
         },
         "shape": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Shape styles.",
           "description-ja": "図形に関するスタイル。",
           "properties": {
@@ -629,6 +660,26 @@
               "type": "string",
               "description": "Changes the shape outline [color](#colors).",
               "description-ja": "図形の枠線の[色](#colors)。"
+            },
+            "outline_t": {
+              "type": "string",
+              "description": "Changes the top border [color](#colors) of a table cell. Only applies to table cells.",
+              "description-ja": "表のセルの上辺の罫線の[色](#colors)。表のセルにのみ有効です。"
+            },
+            "outline_b": {
+              "type": "string",
+              "description": "Changes the bottom border [color](#colors) of a table cell. Only applies to table cells.",
+              "description-ja": "表のセルの下辺の罫線の[色](#colors)。表のセルにのみ有効です。"
+            },
+            "outline_l": {
+              "type": "string",
+              "description": "Changes the left border [color](#colors) of a table cell. Only applies to table cells.",
+              "description-ja": "表のセルの左辺の罫線の[色](#colors)。表のセルにのみ有効です。"
+            },
+            "outline_r": {
+              "type": "string",
+              "description": "Changes the right border [color](#colors) of a table cell. Only applies to table cells.",
+              "description-ja": "表のセルの右辺の罫線の[色](#colors)。表のセルにのみ有効です。"
             },
             "fill": {
               "type": "string",
@@ -655,6 +706,7 @@
     },
     "theme": {
       "type": "object",
+      "additionalProperties": false,
       "x-doc-properties": [
         "colors",
         "colors.lt1",
@@ -673,66 +725,67 @@
       "properties": {
         "colors": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Color values.",
           "description-ja": "テーマの色設定",
           "properties": {
             "lt1": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Text/Background - Light 1\".\nThis is usually the slide background.",
               "description-ja": "テーマの色「テキスト/背景: 淡色 1」。\n通常はこれがスライド背景色です。"
             },
             "dk1": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Text/Background - Dark 1\".\nThis is usually the text color.",
               "description-ja": "テーマの色「テキスト/背景: 濃色 1」。\n通常はこれが文字色です。"
             },
             "lt2": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Text/Background - Light 2\".",
               "description-ja": "テーマの色「テキスト/背景: 淡色 2」。"
             },
             "dk2": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Text/Background - Dark 2\".",
               "description-ja": "テーマの色「テキスト/背景: 濃色 2」。"
             },
             "accent1": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Accent 1\".",
               "description-ja": "テーマの色「アクセント 1」。"
             },
             "accent2": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Accent 2\".",
               "description-ja": "テーマの色「アクセント 2」。"
             },
             "accent3": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Accent 3\".",
               "description-ja": "テーマの色「アクセント 3」。"
             },
             "accent4": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Accent 4\".",
               "description-ja": "テーマの色「アクセント 4」。"
             },
             "accent5": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Accent 5\".",
               "description-ja": "テーマの色「アクセント 5」。"
             },
             "accent6": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Accent 6\".",
               "description-ja": "テーマの色「アクセント 6」。"
             },
             "hlink": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Hyperlink\".",
               "description-ja": "テーマの色「ハイパーリンク」。"
             },
             "folHlink": {
-              "type": "string",
+              "$ref": "#/$defs/theme-color",
               "description": "Color for \"Followed Hyperlink\".",
               "description-ja": "テーマの色「表示済みのハイパーリンク」。"
             }
@@ -740,8 +793,13 @@
         }
       }
     },
+    "theme-color": {
+      "type": ["string", "null"],
+      "x-display-type": "string or null"
+    },
     "databar": {
       "type": "object",
+      "additionalProperties": false,
       "x-doc-properties": ["ratio", "color"],
       "properties": {
         "ratio": {
@@ -759,6 +817,7 @@
     },
     "delete": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["delete"],
       "x-doc-properties": ["delete"],
       "properties": {

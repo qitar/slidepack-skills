@@ -88,7 +88,7 @@ A cell may carry a data bar: `{ "type":"text", "value":"80", "databar": { "ratio
 |---|---|---|---|
 | `type` | `"image"` | ✓ | |
 | `src` | `string` | ✓ | **relative path inside the zip**; jpg/jpeg/gif/png |
-| `scaling` | enum | | `none`(def) \| `contain` \| `cover` |
+| `scaling` | enum \| null | | `none`(def) \| `contain` \| `cover`; `null` = `none` |
 | `overflow` | enum | | `visible`(def) \| `hidden` |
 
 ## Video  (`"type": "video"`)  →  `examples/image-video-theme.json`
@@ -98,7 +98,7 @@ A cell may carry a data bar: `{ "type":"text", "value":"80", "databar": { "ratio
 | `type` | `"video"` | ✓ | |
 | `src` | `string` | ✓ | relative path (mp4/m4v/mov) **or** a YouTube URL |
 | `thumbnail` | `string` | | **required for local files**; same aspect ratio |
-| `scaling` | enum | | `contain`(def) \| `cover` |
+| `scaling` | enum \| null | | `contain`(def) \| `cover`; `null` = `contain` |
 
 ## Delete
 
@@ -109,8 +109,9 @@ into the output. Always delete unused placeholders rather than omitting the key.
 
 ## Chart  (`"type": "chart"`)  →  `examples/chart-*.json`
 
-Bar, Line, Area and Pie are **all** `"type": "chart"`. The visual style comes
-from the template PPTX, not from `data.json`. Match the chart shape's **alt
+Every chart except scatter is `"type": "chart"`: bar, line, area, pie, donut,
+radar, stacked and combination charts alike. The chart's kind comes from the
+template PPTX, not from `data.json`. Match the chart shape's **alt
 text** to the key.
 
 | key | type | req | notes |
@@ -124,6 +125,7 @@ text** to the key.
 | `date_labels_major_time_unit` | enum | | `days` \| `months` \| `years` |
 | `axis1` | `object` | ✓ | primary value axis (see below) |
 | `axis2` | `object` | | secondary axis; identical shape |
+| `blanks` | enum | | how `null` values show: `gap` \| `span` \| `zero`; omitted = template's setting |
 
 ### `axis1` / `axis2`  (chart-axis)
 
@@ -138,8 +140,8 @@ text** to the key.
 
 | key | type | req | notes |
 |---|---|---|---|
-| `name` | `string` | ✓ | legend label |
-| `values` | **`number[]`** | ✓ | flat numbers — one per label |
+| `name` | `string` | | legend label; omitted = the series key |
+| `values` | **`(number \| null)[]`** | ✓ | flat — one per label; `null` = no value |
 | `styles` | `object` | | series-wide color (`styles.shape.fill` / `.outline`) |
 | `data_point_styles` | `object[]` | | per-point styles aligned to `values`; `null` = keep default |
 
@@ -184,7 +186,7 @@ from your data are deleted, and an axis with no series left is deleted too.
 
 | key | type | req | notes |
 |---|---|---|---|
-| `name` | `string` | ✓ | legend label |
+| `name` | `string` | | legend label; omitted = the series key |
 | `values` | **`[number, number][]`** | ✓ | array of `[x, y]` pairs |
 | `styles` | `object` | | series-wide color |
 | `data_point_styles` | `object[]` | | per-point; `null` = keep default |
@@ -263,10 +265,11 @@ it. If the title is fine without a key, the template has no such placeholder.
 
 `styles.font` (applies to text) and `styles.shape` (applies to the shape).
 
-**font:** `typeface` (string) · `size` (number, pt) · `color` (color) ·
+**font:** `typeface` (string) · `size` (integer, pt) · `color` (color) ·
 `bold` · `italic` · `underline` · `strike` (booleans)
 
 **shape:** `fill` (color) · `outline` (color) ·
+`outline_t` / `outline_b` / `outline_l` / `outline_r` (color; table cells only) ·
 `align` (`left`/`center`/`right`/`justified`/`distributed`) ·
 `vertical_align` (`top`/`center`/`bottom`)
 

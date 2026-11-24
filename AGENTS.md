@@ -39,7 +39,7 @@ skills/slidepack/               the distributable skill
 ├── pyproject.toml              runtime deps for uv (`package = false`); not vendored
 ├── schema/
 │   ├── data-json.schema.json   SlidePack's official schema, vendored verbatim — do not edit
-│   └── VERSION.md              source URL, fetch date, refresh steps, documented deviations
+│   └── VERSION.md              source URL, fetch date, refresh steps
 ├── scripts/
 │   ├── run.py                  launcher: supplies deps via uv or a private venv, never the user's Python
 │   ├── validate.py             schema validation + plain-language chart diagnostics
@@ -74,24 +74,17 @@ render a blank chart. `SKILL.md` tells the model to run both when the template i
 ### The vendored schema is pristine
 
 `schema/data-json.schema.json` is fetched verbatim from
-`https://docs.slidepack.io/schemas/data-json.json` and must never be hand-edited. Where the
-published schema is narrower than SlidePack's documented examples, `validate.py` relaxes an **in-memory
-copy** in `apply_compat_shim()` and the deviation is written down in `schema/VERSION.md`.
+`https://docs.slidepack.io/schemas/data-json.json` and must never be hand-edited. The validator
+uses it as is. If the validator ever has to accept something the schema rejects, relax an
+**in-memory copy** in `validate.py` and write the deviation down in `schema/VERSION.md` in the same commit — a silent
+shim is a rule nobody can find later.
 
-One deviation exists today (series without `name`). Text objects without `type` are
-deliberately not relaxed, though the docs show them; `VERSION.md` says why. If you add a
-second, add the shim *and* the `VERSION.md` entry in the same commit — a silent shim is a rule
-nobody can find later. If a schema refresh fixes one, delete the matching shim lines.
-
-`validate.py` also *reads* the schema at runtime: `load_props()` fills `PROPS` from each chart
-definition's `properties`, which is what the unknown-key check compares against. The schema leaves
-`additionalProperties` open everywhere, so a key like `title` inside a chart object is accepted and
-then dropped at render time — the check exists to catch that class of silent failure. Because the
-key lists are derived rather than hand-copied, a refresh updates them for free; the hardcoded sets
-in `PROPS` are only a fallback for when the schema cannot be read. An unknown key is a *warning*,
-not an error, on purpose: the bundled schema may lag the live API, and a validator that rejects
-valid payloads is worse than one that lets a typo through with a note. Title-ish keys are the
-exception — those are documented as never-fields, so they fail.
+`validate.py` also *reads* the schema at runtime: `load_props()` fills `PROPS` from each
+definition's `properties`, which is what the unknown-key check compares against. The schema
+rejects unknown keys, but only as a `oneOf` failure on the whole element; the unknown-key check
+exists to name the offending key instead, and reports it as an error, as the schema does. Because the key lists are derived rather than hand-copied, a refresh
+updates them for free; the hardcoded sets in `PROPS` are only a fallback for when the schema
+cannot be read.
 
 Refreshing the schema means re-running `run-tests.py`: the examples are the regression suite for
 that file.

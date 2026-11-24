@@ -81,6 +81,8 @@ BAD = {
     "text-type-missing": {"slides": [{"template": 1, "t": {"value": "x"}}]},
     "list-item-type-missing": {"slides": [{"template": 1, "lst": {"type": "list", "values": [{"value": "x"}]}}]},
     "table-cell-type-missing": {"slides": [{"template": 1, "tbl": {"type": "table", "rows": [[{"value": "x"}]]}}]},
+    "list-item-unknown-key": {"slides": [{"template": 1, "lst": {
+        "type": "list", "values": [{"type": "text", "value": "Item", "titel": "oops"}]}}]},
 }
 
 # GENERIC_SCHEMA_NOISE in validate.py suppresses a raw jsonschema message only when it matches
@@ -89,7 +91,7 @@ BAD = {
 # exit 1 either way. The only way is to count the finding bullets ("  ✗ ") in the output: 2
 # means the pre-check message and the raw schema message were both printed.
 DUP = {
-    "dup-root-missing-slides": {"t": "x"},
+    "dup-root-missing-slides": {},
     "dup-slides-not-array": {"slides": {"template": 1}},
 }
 
@@ -97,7 +99,6 @@ DUP = {
 # cannot tell "warned as expected" from "said nothing at all", so each needs its warning text:
 #   values: []       a zero-point series renders as a blank chart
 #   inverted bounds  minimum > maximum, and major_unit of exactly 0: a blank or broken axis
-#   list item typo   a typo'd key on a list item is dropped, like an unknown chart/axis key
 WARN = {
     "warn-values-empty": (chart(type="chart", labels=["a"],
                                 axis1={"series": {"s": {"name": "A", "values": []}}}), "is empty"),
@@ -105,8 +106,6 @@ WARN = {
         "series": SERIES, "bounds": {"minimum": 100, "maximum": 0}}), "is inverted"),
     "warn-major-unit-zero": (chart(type="chart", labels=["a"],
                                    axis1={"series": SERIES, "major_unit": 0}), "is 0"),
-    "warn-list-item-unknown-key": ({"slides": [{"template": 1, "lst": {
-        "type": "list", "values": [{"type": "text", "value": "Item", "titel": "oops"}]}}]}, "not a list item field"),
 }
 
 
